@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Briefs</h1>
+<p class="muted">A brief is an ordered set of sections. Schedules print them at set times.</p>
+
+<div class="cards">
+  {% for b in cfg.briefs %}
+  <div class="card brief-card">
+    <div class="brief-head">
+      <h2>{{ b.name }}</h2>
+      <span class="muted">{{ b.sections|length }} section{{ '' if b.sections|length == 1 else 's' }}</span>
+    </div>
+    <img class="preview" src="{{ url_for('preview', name=b.name) }}" alt="preview of {{ b.name }}" loading="lazy">
+    <div class="row">
+      <a class="btn" href="{{ url_for('brief_edit', name=b.name) }}">Edit</a>
+      <form method="post" action="{{ url_for('print_now', name=b.name) }}">
+        <button class="btn secondary">Print now</button>
+      </form>
+      <form method="post" action="{{ url_for('brief_delete', name=b.name) }}"
+            onsubmit="return confirm('Delete brief {{ b.name }}?')">
+        <button class="btn danger">Delete</button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <p>No briefs yet — create one below.</p>
+  {% endfor %}
+</div>
+
+<form class="newbrief" method="post" action="{{ url_for('brief_new') }}">
+  <input name="name" placeholder="new-brief-name" pattern="[a-zA-Z0-9_-]+" required>
+  <button class="btn">+ New brief</button>
+</form>
+
+<h2>Schedules</h2>
+<table class="grid">
+  <tr><th>Name</th><th>Brief</th><th>Time</th><th>Days</th><th></th></tr>
+  {% for s in cfg.schedules %}
+  <tr>
+    <td>{{ s.name }}</td><td>{{ s.brief }}</td><td>{{ s.time }}</td>
+    <td>{{ s.days|join(', ') if s.days else 'every day' }}</td>
+    <td>{{ 'on' if s.enabled else 'off' }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5" class="muted">No schedules.</td></tr>
+  {% endfor %}
+</table>
+<p><a class="btn" href="{{ url_for('schedules') }}">Edit schedules</a></p>
+{% endblock %}

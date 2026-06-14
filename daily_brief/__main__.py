@@ -27,6 +27,7 @@ DEFAULT_PREVIEW = "preview.png"
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="daily_brief", description=__doc__)
     parser.add_argument("--config", help="Path to a TOML config file.")
+    parser.add_argument("--brief", help="Which brief to print (default: the first one).")
     parser.add_argument(
         "--backend",
         choices=["dummy", "usb", "serial"],
@@ -40,11 +41,6 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--out",
         help=f"Save the rendered bitmap to this PNG path (default in dry-run: {DEFAULT_PREVIEW}).",
-    )
-    parser.add_argument(
-        "--all-rotations",
-        action="store_true",
-        help="Test mode: render every choice of each 'rotate' section, not just today's.",
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose logging.")
     args = parser.parse_args(argv)
@@ -62,7 +58,13 @@ def main(argv: list[str] | None = None) -> int:
 
     preview_path = args.out or (DEFAULT_PREVIEW if args.dry_run else None)
 
-    brief = build_brief(config, expand_rotations=args.all_rotations)
+    brief_cfg = config.brief(args.brief)
+    if brief_cfg is None:
+        which = f" {args.brief!r}" if args.brief else ""
+        print(f"error: no brief{which} configured", file=sys.stderr)
+        return 1
+
+    brief = build_brief(config, brief_cfg)
 
     try:
         if args.dry_run:

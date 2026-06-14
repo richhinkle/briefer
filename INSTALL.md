@@ -1,0 +1,150 @@
+# Installing Daily Brief on a Raspberry Pi
+
+From a freshly-flashed card to a printing appliance. Targets a **Raspberry Pi
+Zero 2 W** running **Raspberry Pi OS Bookworm (64-bit)** with NetworkManager.
+
+The examples assume hostname `cedar`, user `briefer`, and the project at
+`/home/briefer/briefer` — adjust if yours differ (and update
+`systemd/daily-brief.service` to match).
+
+## 1. Flash Raspberry Pi OS
+
+In **Raspberry Pi Imager**, choose **Raspberry Pi OS (64-bit)**. Open the **⚙
+settings** before writing and set:
+
+- Hostname: `cedar`
+- Username: `briefer` (+ a password)
+- Enable **SSH**
+- WiFi SSID/password + country — *optional*; leave blank to exercise the
+  access-point setup flow instead.
+
+Write the card and boot the Pi.
+
+## 2. SSH in
+
+```bash
+ssh briefer@cedar.local      # or briefer@<pi-ip>
+```
+
+## 3. System packages
+
+```bash
+sudo apt update
+sudo apt install -y python3-venv python3-dev build-essential \
+                    libusb-1.0-0 \
+                    python3-gpiozero python3-lgpio
+```
+
+- `libusb-1.0-0` — USB printer access
+- `python3-gpiozero`, `python3-lgpio` — the physical setup button (optional)
+- `python3-dev`, `build-essential` — so any source-only wheel can compile
+
+## 4. Get the code onto the Pi
+
+From your **laptop** (rsyncs to `briefer@cedar:/home/briefer/briefer`):
+
+```bash
+./scripts/sync-to-pi.sh      # Ctrl-C after the first "initial sync" finishes
+```
+
+Or clone it directly on the Pi:
+
+```bash
+git clone <your-repo> /home/briefer/briefer
+```
+
+## 5. Python environment + dependencies (on the Pi)
+
+```bash
+cd ~/briefer
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+## 6. Find and wire the printer
+
+Plug the printer into the Pi's USB, then:
+
+```bash
+python scripts/printer_test.py --list-usb      # confirm it shows 1d81:5721
+
+# allow non-root USB access (handy for manual tests):
+echo 'SUBSYSTEM=="usb", ATTRS{idVendor}=="1d81", ATTRS{idProduct}=="5721", MODE="0666"' \
+  | sudo tee /etc/udev/rules.d/99-escpos.rules
+sudo udevadm control --reload-rules && sudo udevadm trigger
+
+python scripts/printer_test.py --backend usb   # should print a test receipt
+```
+
+## 7. Install the daemon as a service
+
+```bash
+sudo cp systemd/daily-brief.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now daily-brief
+journalctl -u daily-brief -f                    # watch it start; Ctrl-C to stop watching
+```
+
+The daemon runs as **root** (it needs port 80, `nmcli`, and GPIO). It starts the
+always-on web console + the scheduler, and brings up the WiFi access point when
+the Pi is offline.
+
+## 8. Finish setup in the browser
+
+- **Already on WiFi:** browse to `http://cedar.local` (or `http://<pi-ip>`).
+- **No WiFi configured:** join the `daily-brief-setup` network (password
+  `briefme123`) from your phone/laptop, browse to `http://10.42.0.1`, and use the
+  **WiFi** page to join your network. The AP drops once the Pi is online; the
+  console stays reachable on your LAN.
+
+In the console:
+
+1. **Set a console password** (first-visit prompt).
+2. **Settings** → printer **Backend = usb**, your **location** (lat/lon/tz), and
+   optionally a **Claude API key**.
+3. **Briefs** → edit a brief: drag to reorder sections, fill in your
+   **OpenWeatherMap key** and **calendar URLs**, **Save**, then **Print now** to test.
+4. **Schedules** → set when each brief prints.
+
+Edits are saved to `~/briefer/config.toml`; the daemon reloads automatically — no
+restart needed.
+
+## Day-to-day
+
+```bash
+sudo systemctl status daily-brief     # is it running?
+journalctl -u daily-brief -f          # live logs
+sudo systemctl restart daily-brief    # after upgrading code
+```
+
+- **Re-open the AP** to change WiFi: hold the button on GPIO 17 for ~1s (or
+  disconnect from WiFi).
+- **First print of the day** may lag a few seconds while network sources fetch
+  live data (cached afterward).
+- The console is **HTTP** — fine on a trusted LAN; the password still gates
+  access, but it crosses the network in cleartext.
+
+## Updating
+
+```bash
+# from your laptop:
+./scripts/sync-to-pi.sh               # (or git pull on the Pi)
+# on the Pi, if dependencies changed:
+cd ~/briefer && source .venv/bin/activate && pip install -r requirements.txt
+sudo systemctl restart daily-brief
+```
+
+## Troubleshooting
+
+- **Service won't start / port 80 in use** — `journalctl -u daily-brief -e`.
+  Another web server on 80? Change `[web] port` in `config.toml`.
+- **Nothing prints on schedule** — check the printer with
+  `python scripts/printer_test.py --backend usb`, and confirm `[printer] backend
+  = "usb"` in Settings. Verify the schedule time/day and that it's enabled.
+- **`pip install` stalls building a wheel** — ensure step 3's `python3-dev` /
+  `build-essential` are installed (most arm64 packages ship prebuilt wheels, so
+  this is rare).
+- **Forgot the console password** — edit `~/briefer/config.toml`, delete the
+  `password_hash` line under `[web]`, `sudo systemctl restart daily-brief`, then
+  set a new one on next visit.

@@ -83,8 +83,10 @@ def build(section_cfg, ctx) -> Section | None:
     order = [words[(start + i) % len(words)] for i in range(len(words))]
     rng.shuffle(order)
 
-    # Preferred path: Claude defines the day's word and gives an example.
-    if ctx.config.claude.enabled:
+    # When this section opts into AI (and AI is active), Claude defines the
+    # day's word with an example. A failed call is surfaced, not silently
+    # swapped for the dictionary.
+    if section_cfg.get("use_claude", True) and ctx.config.claude.active:
         word = order[0]
         result = _claude_define(ctx.config.claude, word)
         if result:
@@ -93,8 +95,9 @@ def build(section_cfg, ctx) -> Section | None:
             if example:
                 items.append(Text(f'"{example}"'))
             return Section(title, items)
-        # else fall through to the dictionary lookup below
+        return Section(title, [Text(word), Text("(AI unavailable)")])
 
+    # Otherwise (AI off, no key, or use_claude unchecked): free Dictionary API.
     for word in order[:MAX_TRIES]:
         result = _define(word)
         if result:

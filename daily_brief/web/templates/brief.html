@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="{{ url_for('dashboard') }}">&larr; Briefs</a></p>
+<h1>Edit brief: {{ brief.name }}</h1>
+
+<form id="brief-form" method="post">
+  <input type="hidden" name="order" id="order">
+
+  <div id="sections">
+    {% for sec in brief.sections %}
+    {% set i = loop.index0 %}
+    {% set spec = specs.get(sec.type) %}
+    <div class="section" data-index="{{ i }}">
+      <input type="hidden" name="sec-{{ i }}-type" value="{{ sec.type }}">
+      <div class="section-head">
+        <span class="handle" title="drag to reorder">⠿</span>
+        <strong>{{ spec.label if spec else sec.type }}</strong>
+        <code>{{ sec.type }}</code>
+        <label class="enabled"><input type="checkbox" name="sec-{{ i }}-enabled" {{ 'checked' if sec.enabled }}> enabled</label>
+        <button class="btn danger small" name="action" value="delete:{{ i }}">Remove</button>
+      </div>
+      {% if spec and spec.requires_claude %}<p class="hint">Needs a Claude API key (Settings).</p>{% endif %}
+
+      <div class="fields">
+        {% if not (spec and spec.bare) %}
+        <label>Title<input name="sec-{{ i }}-title" value="{{ sec.title or '' }}" placeholder="default"></label>
+        <label>Icon
+          <select name="sec-{{ i }}-icon">
+            {% set cur_icon = sec.options.get('icon', default_icons.get(sec.type, '')) %}
+            {% for ic in icons %}
+            <option value="{{ ic }}" {{ 'selected' if ic == cur_icon }}>{{ ic or '(none)' }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        {% endif %}
+
+        {% for f in (spec.fields if spec else []) %}
+          {% set name = 'sec-' ~ i ~ '-' ~ f.key %}
+          {% set val = sec.get(f.key, f.default) %}
+          {% if f.kind == 'bool' %}
+            <label class="check"><input type="checkbox" name="{{ name }}" {{ 'checked' if val }}> {{ f.label }}</label>
+          {% elif f.kind == 'int' %}
+            <label>{{ f.label }}<input type="number" name="{{ name }}" value="{{ val if val is not none else '' }}"></label>
+          {% elif f.kind == 'secret' %}
+            <label>{{ f.label }}<input type="password" name="{{ name }}" placeholder="{{ '•••• (set)' if val else 'unset' }}"></label>
+          {% elif f.kind == 'select' %}
+            <label>{{ f.label }}
+              <select name="{{ name }}">
+                {% for c in f.choices %}<option value="{{ c }}" {{ 'selected' if c == val }}>{{ c }}</option>{% endfor %}
+              </select>
+            </label>
+          {% elif f.kind == 'textarea' %}
+            <label class="wide">{{ f.label }}<textarea name="{{ name }}" rows="3">{{ val or '' }}</textarea></label>
+          {% else %}
+            <label class="wide">{{ f.label }}<input name="{{ name }}" value="{{ val or '' }}"></label>
+          {% endif %}
+          {% if f.help %}<small class="help">{{ f.help }}</small>{% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="row addrow">
+    <select name="add_type">
+      {% for t, s in specs.items() %}<option value="{{ t }}">{{ s.label }}</option>{% endfor %}
+    </select>
+    <button class="btn secondary" name="action" value="add">+ Add section</button>
+    <button class="btn" name="action" value="save">Save</button>
+  </div>
+</form>
+
+<h2>Preview</h2>
+<img class="preview" src="{{ url_for('preview', name=brief.name) }}" alt="preview">
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='sortable.min.js') }}"></script>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+{% endblock %}

@@ -5,8 +5,8 @@
 
 set -euo pipefail
 
-HOST="gvera@beech"
-REMOTE="/home/gvera/brief/"
+HOST="briefer@cedar"
+REMOTE="/home/briefer/briefer/"
 LOCAL="$(cd "$(dirname "$0")/.." && pwd)/"
 
 do_sync() {
@@ -16,6 +16,7 @@ do_sync() {
     --exclude='.pytest_cache' \
     --exclude='.git' \
     --exclude='*.pyc' \
+    --exclude='config.toml' \
     "$LOCAL" "$HOST:$REMOTE"
 }
 
@@ -29,6 +30,7 @@ fswatch -o \
   --exclude='\.pytest_cache' \
   --exclude='\.git' \
   --exclude='\.pyc$' \
+  --exclude='config.toml' \
   "$LOCAL" | while read -r; do
     echo "==> change detected, syncing..."
     do_sync

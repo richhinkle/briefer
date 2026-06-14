@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>WiFi</h1>
+
+{% if not available %}
+  <p class="muted">NetworkManager (<code>nmcli</code>) isn't available here, so WiFi
+  management is disabled. This page works on the Raspberry Pi.</p>
+{% else %}
+  <p>Status:
+    {% if online %}<strong>online</strong>{% if current %} — connected to <strong>{{ current }}</strong>{% endif %}
+    {% else %}<strong>offline</strong> (setup mode){% endif %}
+  </p>
+  <p class="muted">Pick your network and enter its password. Once the device joins,
+  the access point and this setup site will switch off automatically.</p>
+
+  <form method="post" class="wifi">
+    <label>Network
+      <select name="ssid" required>
+        <option value="" disabled selected>Choose a network…</option>
+        {% for n in nets %}
+        <option value="{{ n.ssid }}">{{ n.ssid }} {{ '🔒' if n.secure }} ({{ n.signal }}%)</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Password<input type="password" name="password" placeholder="(leave blank for open networks)"></label>
+    <button class="btn" type="submit">Connect</button>
+  </form>
+
+  {% if not nets %}<p class="muted">No networks found yet — reload to rescan.</p>{% endif %}
+{% endif %}
+{% endblock %}

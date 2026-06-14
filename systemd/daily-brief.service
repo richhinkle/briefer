@@ -1,0 +1,24 @@
+# Daily Brief daemon: scheduler + setup-mode (AP/web/button) state machine.
+#
+# Install (adjust paths/user to match your Pi):
+#   sudo cp systemd/daily-brief.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now daily-brief
+#   journalctl -u daily-brief -f      # follow logs
+#
+# Runs as root: nmcli (AP + WiFi changes) and GPIO need privileges.
+
+[Unit]
+Description=Daily Brief printer daemon (scheduler + setup mode)
+Wants=NetworkManager.service
+After=NetworkManager.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/briefer/briefer
+ExecStart=/home/briefer/briefer/.venv/bin/python -m daily_brief.daemon --config /home/briefer/briefer/config.toml
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

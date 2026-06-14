@@ -1,13 +1,9 @@
-"""Thin wrapper around the Claude API for the optional LLM-powered sources.
+"""Thin wrapper around the Claude API for the LLM-powered sources.
 
-Uses the official `anthropic` SDK, imported lazily so the package isn't a hard
-dependency — if it's not installed (or no API key is set, or the request fails),
-`generate()` returns None and callers fall back to their non-Claude behavior.
-Responses are cached (reusing the HTTP file cache) so re-runs on the same day
-don't spend tokens again.
-
-On a Pi Zero W (armv6) install with:  pip install anthropic
-(see requirements.txt). It's optional; the brief prints fine without it.
+Uses the official `anthropic` SDK (imported lazily). If no API key is set, or the
+request fails, `generate()` returns None and callers fall back to their
+non-Claude behavior — so the brief still prints. Responses are cached (reusing
+the HTTP file cache) so re-runs on the same day don't spend tokens again.
 """
 
 from __future__ import annotations
@@ -25,7 +21,7 @@ _client_failed = False
 def _get_client(cfg: ClaudeConfig):
     """Return a cached Anthropic client, or None if unavailable."""
     global _client, _client_failed
-    if not cfg.enabled or _client_failed:
+    if not cfg.active or _client_failed:
         return None
     if _client is None:
         try:

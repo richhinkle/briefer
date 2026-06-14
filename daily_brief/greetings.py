@@ -61,34 +61,20 @@ GREETINGS = [
 
 
 def greeting_for(day: date) -> str:
-    """Pick a greeting deterministically for the given date."""
+    """Pick a built-in greeting deterministically for the given date."""
     return GREETINGS[day.toordinal() % len(GREETINGS)]
 
 
-_GREETING_SYSTEM = (
+# System prompt + ready-made AI prompts for the `greeting` section.
+GREETING_SYSTEM = (
     "You write a single playful one-line greeting for the top of a daily "
     "briefing printed on a paper receipt. Keep it under 30 characters, upbeat "
     "and a little witty. No quotes, no emoji, no punctuation at the end."
 )
 
-
-def generate_greeting(config, now) -> str:
-    """A fresh Claude-written greeting for the day, or the static fallback.
-
-    Falls back to `greeting_for` when Claude isn't configured/available.
-    """
-    from .llm import generate
-
-    text = generate(
-        config.claude,
-        system=_GREETING_SYSTEM,
-        prompt=f"Write today's greeting. Today is {now:%A, %B %d}.",
-        max_tokens=32,
-        cache_key=f"greeting:{now:%Y-%m-%d}",
-    )
-    if text:
-        # Take the first line, strip stray quotes, and keep it short.
-        line = text.strip().splitlines()[0].strip().strip('"').strip()
-        if line:
-            return line[:40]
-    return greeting_for(now.date())
+GREETING_PRESETS = {
+    "morning": "Write an upbeat good-morning greeting.",
+    "afternoon": "Write a cheerful good-afternoon greeting.",
+    "evening": "Write a calm, warm good-evening greeting.",
+    "weekend": "Write a relaxed, fun weekend greeting.",
+}

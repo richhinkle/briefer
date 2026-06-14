@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="{{ url_for('dashboard') }}">&larr; Briefs</a></p>
+<h1>Schedules</h1>
+<p class="muted">Each schedule prints a brief at a time. No days selected = every day.</p>
+
+<form method="post">
+  {% for s in cfg.schedules %}
+  {% set i = loop.index0 %}
+  <div class="section">
+    <div class="fields">
+      <label>Name<input name="sch-{{ i }}-name" value="{{ s.name }}"></label>
+      <label>Brief
+        <select name="sch-{{ i }}-brief">
+          {% for b in cfg.briefs %}<option value="{{ b.name }}" {{ 'selected' if b.name == s.brief }}>{{ b.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Time<input type="time" name="sch-{{ i }}-time" value="{{ s.time }}"></label>
+      <label class="check"><input type="checkbox" name="sch-{{ i }}-enabled" {{ 'checked' if s.enabled }}> enabled</label>
+    </div>
+    <div class="days">
+      {% for d in days %}
+      <label class="day"><input type="checkbox" name="sch-{{ i }}-day-{{ d }}" {{ 'checked' if d in s.days }}> {{ d }}</label>
+      {% endfor %}
+    </div>
+    <button class="btn danger small" name="action" value="delete:{{ i }}">Remove</button>
+  </div>
+  {% endfor %}
+  <div class="row">
+    <button class="btn secondary" name="action" value="add">+ Add schedule</button>
+    <button class="btn" name="action" value="save">Save</button>
+  </div>
+</form>
+{% endblock %}

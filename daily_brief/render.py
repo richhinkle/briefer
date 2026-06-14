@@ -16,9 +16,10 @@ from functools import lru_cache
 
 from PIL import Image, ImageDraw, ImageFont
 
-from .brief import Banner, Brief, Bullet, Checkbox, KeyVal, Mono, Picture, Section, Text, Weather
+from .brief import (
+    Banner, Brief, Bullet, Checkbox, KeyVal, Mono, Picture, Section, Text, Title, Weather,
+)
 from .config import ASSETS_DIR, RenderConfig
-from .greetings import greeting_for
 
 SCRATCH_HEIGHT = 8000  # tall scratch canvas; cropped to used height at the end
 ICON_SIZE = 84       # weather pictogram
@@ -214,36 +215,48 @@ class Canvas:
         self.img.paste(img, (x, self.y))
         self.y += img.height
 
+    def title(self, text: str, subtitle: str = "") -> None:
+        """Big centered greeting + centered subtitle (the brief header look)."""
+        self._center_fit(text, self.bold_path, self.title_size)
+        if subtitle:
+            self.spacer(2)
+            self._center(subtitle, self.f_body)
+
     # --- composition -------------------------------------------------------
 
+    def _draw_item(self, item) -> None:
+        if isinstance(item, Text):
+            self.text(item.text)
+        elif isinstance(item, Checkbox):
+            self.checkbox(item.label, item.checked)
+        elif isinstance(item, Bullet):
+            self.bullet(item.text)
+        elif isinstance(item, Banner):
+            self.banner(item.text, item.icon_key)
+        elif isinstance(item, KeyVal):
+            self.keyval(item.label, item.value)
+        elif isinstance(item, Weather):
+            self.weather(item)
+        elif isinstance(item, Picture):
+            self.picture(item.image)
+        elif isinstance(item, Mono):
+            self.mono(item.text)
+        elif isinstance(item, Title):
+            self.title(item.text, item.subtitle)
+
     def section(self, section: Section) -> None:
+        # A "bare" section (e.g. the greeting) renders its items with no
+        # separator rule or heading — just the centered title block.
+        if section.bare:
+            for item in section.items:
+                self._draw_item(item)
+            self.spacer(4)
+            return
         self.rule()
         self.heading(section.title, section.icon)
         for item in section.items:
-            if isinstance(item, Text):
-                self.text(item.text)
-            elif isinstance(item, Checkbox):
-                self.checkbox(item.label, item.checked)
-            elif isinstance(item, Bullet):
-                self.bullet(item.text)
-            elif isinstance(item, Banner):
-                self.banner(item.text, item.icon_key)
-            elif isinstance(item, KeyVal):
-                self.keyval(item.label, item.value)
-            elif isinstance(item, Weather):
-                self.weather(item)
-            elif isinstance(item, Picture):
-                self.picture(item.image)
-            elif isinstance(item, Mono):
-                self.mono(item.text)
+            self._draw_item(item)
             self.spacer(2)
-
-    def header(self, when: datetime, greeting: str | None = None) -> None:
-        self.spacer(6)
-        self._center_fit(greeting or greeting_for(when.date()), self.bold_path, self.title_size)
-        self.spacer(2)
-        self._center(when.strftime("%A, %d %B %Y"), self.f_body)
-        self.spacer(2)
 
     def footer(self) -> None:
         self.rule()
@@ -260,7 +273,7 @@ def render_brief(printer, brief: Brief, cfg: RenderConfig, preview_path=None) ->
     `printer` may be None (preview only). Returns the rendered PIL image.
     """
     canvas = Canvas(cfg)
-    canvas.header(brief.date, brief.greeting)
+    canvas.spacer(6)  # small top margin (the greeting is now an ordinary section)
     for section in brief.sections:
         canvas.section(section)
     canvas.footer()

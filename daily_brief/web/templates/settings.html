@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="{{ url_for('dashboard') }}">&larr; Briefs</a></p>
+<h1>Settings</h1>
+
+<form method="post">
+  <fieldset><legend>Printer</legend>
+    <div class="fields">
+      <label>Backend
+        <select name="printer_backend">
+          {% for b in ['dummy', 'usb', 'serial'] %}<option value="{{ b }}" {{ 'selected' if b == cfg.printer.backend }}>{{ b }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>USB vendor id<input name="usb_vendor_id" value="0x{{ '%04x' % cfg.printer.usb.vendor_id }}"></label>
+      <label>USB product id<input name="usb_product_id" value="0x{{ '%04x' % cfg.printer.usb.product_id }}"></label>
+      <label>Serial port<input name="serial_port" value="{{ cfg.printer.serial.port }}"></label>
+      <label>Serial baud<input type="number" name="serial_baudrate" value="{{ cfg.printer.serial.baudrate }}"></label>
+    </div>
+  </fieldset>
+
+  <fieldset><legend>Location</legend>
+    <div class="fields">
+      <label>Latitude<input name="lat" value="{{ cfg.location.lat }}"></label>
+      <label>Longitude<input name="lon" value="{{ cfg.location.lon }}"></label>
+      <label>Timezone<input name="tz" value="{{ cfg.location.tz }}"></label>
+    </div>
+  </fieldset>
+
+  <fieldset><legend>Render</legend>
+    <div class="fields">
+      <label>Width (dots)<input type="number" name="dot_width" value="{{ cfg.render.dot_width }}"></label>
+      <label>Body size<input type="number" name="body_size" value="{{ cfg.render.body_size }}"></label>
+      <label>Heading size<input type="number" name="heading_size" value="{{ cfg.render.heading_size }}"></label>
+      <label>Margin<input type="number" name="margin" value="{{ cfg.render.margin }}"></label>
+    </div>
+  </fieldset>
+
+  <fieldset><legend>AI (Claude)</legend>
+    <div class="fields">
+      <label class="check"><input type="checkbox" name="claude_enabled" {{ 'checked' if cfg.claude.enabled }}> Enable AI</label>
+      <label>API key<input type="password" name="claude_api_key" placeholder="{{ '•••• (set)' if cfg.claude.api_key else 'unset' }}"></label>
+      <label>Model<input name="claude_model" value="{{ cfg.claude.model }}"></label>
+    </div>
+    <small class="help">Master switch (needs a key). It gates the greeting and
+    the <code>ai</code> section; the <strong>word</strong> and <strong>ascii</strong>
+    sections each have their own "Use AI" checkbox in the brief builder. When a
+    section's AI call fails it shows "(AI unavailable)" rather than the local version.</small>
+  </fieldset>
+
+  <fieldset><legend>Setup AP &amp; button</legend>
+    <div class="fields">
+      <label>AP SSID<input name="ap_ssid" value="{{ cfg.network.ap_ssid }}"></label>
+      <label>AP password<input type="password" name="ap_password" placeholder="•••• (set)"></label>
+      <label>Button GPIO<input type="number" name="button_gpio" value="{{ cfg.network.button_gpio if cfg.network.button_gpio is not none else '' }}"></label>
+    </div>
+  </fieldset>
+
+  <button class="btn" type="submit">Save settings</button>
+</form>
+{% endblock %}

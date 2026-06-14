@@ -20,6 +20,7 @@ from datetime import datetime
 
 from ..brief import Section, Text
 from ..config import Config, SectionConfig
+from .specs import AVAILABLE_ICONS, SECTION_SPECS, Field, SectionSpec  # re-export
 
 log = logging.getLogger(__name__)
 
@@ -30,7 +31,6 @@ class SourceContext:
 
     config: Config
     now: datetime
-    expand_rotations: bool = False  # test mode: render all rotate choices
 
     @property
     def location(self):
@@ -90,44 +90,6 @@ def build_section(section_cfg: SectionConfig, ctx: SourceContext) -> Section | N
     return section
 
 
-def _rotate_choices(section_cfg: SectionConfig) -> list[SectionConfig]:
-    """Parse a rotate section's child sections from its `choices` list."""
-    choices = []
-    for raw in section_cfg.get("choices", []):
-        if not isinstance(raw, dict) or "type" not in raw:
-            continue
-        options = {k: v for k, v in raw.items() if k not in {"type", "title", "enabled"}}
-        choices.append(
-            SectionConfig(
-                type=raw["type"],
-                title=raw.get("title"),
-                enabled=raw.get("enabled", True),
-                options=options,
-            )
-        )
-    return [c for c in choices if c.enabled]
-
-
-def expand_section(section_cfg: SectionConfig, ctx: SourceContext) -> list[Section]:
-    """Build a configured section into one or more rendered Sections.
-
-    For a `rotate` section, this picks one child per day (or, in test mode,
-    returns all of them). Everything else builds to a single section.
-    """
-    if section_cfg.type != "rotate":
-        section = build_section(section_cfg, ctx)
-        return [section] if section is not None else []
-
-    choices = _rotate_choices(section_cfg)
-    if not choices:
-        return []
-    if ctx.expand_rotations:
-        picks = choices  # test mode: show them all
-    else:
-        picks = [choices[ctx.now.toordinal() % len(choices)]]
-    return [s for s in (build_section(c, ctx) for c in picks) if s is not None]
-
-
 # Builders are imported lazily inside _register to keep import cost low on the
 # Pi and avoid pulling optional deps until a section actually uses them.
 def _register() -> dict:
@@ -136,6 +98,7 @@ def _register() -> dict:
         asciiart,
         calendar,
         daylight,
+        greeting,
         joke,
         oncall,
         onthisday,
@@ -146,6 +109,7 @@ def _register() -> dict:
     )
 
     return {
+        "greeting": greeting.build,
         "weather": weather.build,
         "birthdays": calendar.build_birthdays,
         "events": calendar.build_events,

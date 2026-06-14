@@ -78,7 +78,15 @@ class Mono:
     text: str
 
 
-Item = Text | Checkbox | Bullet | Banner | KeyVal | Weather | Picture | Mono
+@dataclass
+class Title:
+    """A big centered greeting with a centered subtitle below (the brief header)."""
+
+    text: str
+    subtitle: str = ""
+
+
+Item = Text | Checkbox | Bullet | Banner | KeyVal | Weather | Picture | Mono | Title
 
 
 # --- Sections / Brief ------------------------------------------------------
@@ -89,36 +97,36 @@ class Section:
     title: str
     items: list[Item] = field(default_factory=list)
     icon: str | None = None  # icon key (assets/icons/<icon>.png) for the header
+    bare: bool = False        # render items only, no separator rule or heading
 
 
 @dataclass
 class Brief:
     date: datetime
     sections: list[Section] = field(default_factory=list)
-    greeting: str | None = None  # header greeting (Claude-written if enabled)
 
 
-def build_brief(config, now: datetime | None = None, expand_rotations: bool = False) -> Brief:
-    """Build the brief from the configured `[[sections]]`.
+def build_brief(config, brief, now: datetime | None = None) -> Brief:
+    """Build a `Brief` from a `BriefConfig` (its ordered sections).
 
-    Iterates enabled sections in config order and asks each source to build
-    its `Section`. Every source call goes through `safe_build`, so a failing or
+    Iterates the brief's enabled sections and asks each source to build its
+    `Section`. Every source call goes through `safe_build`, so a failing or
     offline source yields an "(unavailable)" section instead of crashing the
-    whole print job. With `expand_rotations`, any `rotate` section renders all
-    of its choices instead of the day's single pick (test mode).
+    whole print job. `config` carries the shared globals (location, render,
+    claude). `brief` may be None.
     """
     # Imported here to avoid a circular import (sources import brief items).
-    from .sources import SourceContext, expand_section
+    from .sources import SourceContext, build_section
 
     now = now or datetime.now()
-    ctx = SourceContext(config=config, now=now, expand_rotations=expand_rotations)
+    ctx = SourceContext(config=config, now=now)
 
     sections: list[Section] = []
-    for section_cfg in config.sections:
+    for section_cfg in (brief.sections if brief else []):
         if not section_cfg.enabled:
             continue
-        sections.extend(expand_section(section_cfg, ctx))
+        section = build_section(section_cfg, ctx)
+        if section is not None:
+            sections.append(section)
 
-    from .greetings import generate_greeting
-
-    return Brief(date=now, sections=sections, greeting=generate_greeting(config, now))
+    return Brief(date=now, sections=sections)

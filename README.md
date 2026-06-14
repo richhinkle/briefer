@@ -2,7 +2,7 @@
 
 Print a daily morning briefing — weather, birthdays, upcoming events, a word of
 the day, trivia, an "on this day" fact, and a dad joke — on a thermal receipt
-printer attached to a Raspberry Pi Zero W.
+printer attached to a Raspberry Pi Zero W or Zero 2 W.
 
 The printer is an ESC/POS receipt module (USB/serial) driven by
 [python-escpos](https://github.com/python-escpos/python-escpos). Paper is 58mm.
@@ -12,40 +12,71 @@ section rules.
 
 ## Status
 
-Working. Sections are fully configurable from `config.toml` — enable/disable and
-reorder them, each with its own settings. Sources degrade gracefully: a source
-that's offline or misconfigured prints "(unavailable)" instead of failing the
-whole brief.
+Working. It runs as a small appliance: a **setup-mode web UI** edits everything,
+multiple **briefs** (named, ordered sets of sections) are fired by **schedules**,
+and a daemon prints them at their times. Sources degrade gracefully: one that's
+offline or misconfigured prints "(unavailable)" instead of failing the brief.
 
-Built-in sections: `weather` (OpenWeatherMap), `birthdays` + `events` (iCal),
-`oncall` (iCal), `word` (rare/SAT word + Free Dictionary), `trivia`, `onthisday`,
-`daylight`, `joke`, `ascii` (a daily ASCII-art doodle), `ai` (your own
-prompt → Claude), and space: `iss`, `moon`, `planets`. A `rotate` section cycles
-through choices one-per-day (e.g. the space images);
-preview them all with `--all-rotations`. The birthdays header gets a small icon
-(opt others in with `icon = "<key>"`), and the page is topped with a rotating
-funny greeting.
+- **Data model:** section (a content block) → brief (an ordered set) → schedule
+  (prints a brief at a time). All in one `config.toml`.
+- **Web console (always on, password-protected):** reorder sections (drag-drop),
+  edit keys / calendar URLs / prompts, manage briefs + schedules + global
+  settings, enter WiFi, and print/preview. You set the password on first visit.
+- **Setup access point:** on boot with no WiFi the Pi becomes an access point so
+  you can reach the console and join a network; the AP drops once it's online. A
+  GPIO button re-opens it to change WiFi. (Bookworm + NetworkManager.)
+
+Built-in sections: `greeting` (the configurable header), `weather`
+(OpenWeatherMap), `birthdays` + `events` (iCal), `oncall` (iCal), `word`
+(rare/SAT word + Free Dictionary), `trivia`, `onthisday`, `daylight`, `joke`,
+`ascii` (a daily ASCII-art doodle), `ai` (your own prompt → Claude), and space:
+`iss`, `moon`, `planets`. The birthdays header gets a small icon (opt others in
+with `icon = "<key>"`).
 
 ## Project layout
 
 ```
 daily_brief/            Python package
-  __main__.py           entry point: build + print the brief (--dry-run, --out)
-  config.py             load config.toml into dataclasses
+  __main__.py           print CLI: build + print a brief (--brief, --dry-run, --out)
+  daemon.py             long-running service: scheduler + setup-mode state machine
+  config.py             load/save config.toml; briefs/schedules/globals dataclasses
   printer.py            make_printer() — the only place that touches hardware
-  brief.py              Brief/Section/Item data model + build_brief()
+  brief.py              Brief/Section/Item data model + build_brief(config, brief)
   render.py             draws the brief to a bitmap and prints it as an image
-  sources/              one builder per section (registered in __init__.py)
-  assets/               bundled font (Inter) + weather pictograms
-scripts/
-  printer_test.py       hardware smoke test + USB device lister
-  gen_weather_icons.py  regenerate the weather pictograms
-  sync-to-pi.sh         rsync the project to the Pi on every change
-tests/
-  test_printer.py       runs against the dummy backend, no hardware needed
-config.example.toml     copy to config.toml and edit for your setup
+  network.py            nmcli wrapper (AP / WiFi / connectivity); no-ops off-Pi
+  sources/              one builder per section + specs.py (field schema for the UI)
+  web/                  Flask setup UI (templates, static, forms)
+  assets/               bundled fonts + weather/header pictograms + ISS world map
+scripts/                printer_test.py, gen_icons.py, gen_weather_icons.py, sync-to-pi.sh
+systemd/daily-brief.service   runs the daemon on boot
+tests/                  pytest (dummy backend / Flask test client — no hardware)
+config.example.toml     copy to config.toml (or let the web UI write it)
 requirements.txt
 ```
+
+## Setup mode, briefs & schedules
+
+```bash
+python -m daily_brief.web                 # setup UI at http://127.0.0.1:8080 (dev)
+python -m daily_brief --brief morning --dry-run   # preview one brief to preview.png
+python -m daily_brief.daemon --no-setup   # run just the scheduler (laptop-safe)
+```
+
+On the Pi the daemon runs via systemd and handles the access point, web server,
+and button automatically:
+
+```bash
+sudo apt install python3-gpiozero python3-lgpio   # optional: the setup button
+sudo cp systemd/daily-brief.service /etc/systemd/system/
+sudo systemctl enable --now daily-brief
+```
+
+First boot with no WiFi → join the `daily-brief-setup` access point → browse to
+`http://10.42.0.1` → set a console password → enter your WiFi. The device joins
+the network (the AP drops) and the console stays reachable on your LAN at the
+Pi's address. Press the button to re-open the AP to change WiFi.
+
+> **Full Pi setup from a clean OS install:** see **[INSTALL.md](INSTALL.md)**.
 
 ## Setup
 
@@ -141,12 +172,11 @@ Only two sections need credentials; everything else works out of the box:
   Google Calendar "secret address"; `webcal://` URLs are accepted).
 - **`iss`, `moon`, `planets`, `word`, `trivia`, `onthisday`, `daylight`, `joke`,
   `ascii`** — no key needed.
-- **Claude (optional)** — set `[claude] api_key` and `pip install anthropic` to
-  have Claude write a fresh daily greeting, define the word of the day (with an
-  example sentence), and — with `use_claude = true` on the `ascii` section — draw
-  the ASCII art. It also unlocks the `ai` section — your own `title` + `prompt`
-  fed to Claude, capped to `max_chars`. Without a key, each falls back to its
-  built-in behavior (the `ai` section just shows a hint). The SDK
-  isn't a default dependency since its `pydantic-core` build is awkward on the Pi
-  Zero W (armv6). Defaults to Opus; set `model = "claude-haiku-4-5"` for ~5× lower
-  cost on these tiny daily calls.
+- **AI (Claude)** — `[claude] enabled` is a master toggle (a checkbox in
+  Settings). When it's on **and** an `api_key` is set, AI is used by the
+  **greeting**, **word of the day**, the **`ai`** section, and **ASCII art**
+  (`use_claude = true`). If a call fails, those sections print **"(AI
+  unavailable)"** rather than quietly using the local version — so a broken key
+  is visible. Turn the toggle off (or leave the key unset) and everything uses
+  its local behavior (rotating greeting, Free Dictionary, the bundled gallery).
+  Defaults to Opus; set `model = "claude-haiku-4-5"` for ~5× lower cost.

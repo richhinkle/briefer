@@ -33,8 +33,10 @@ def build(section_cfg, ctx) -> Section | None:
     prompt = section_cfg.get("prompt")
     if not prompt:
         return Section(title, [Text("(no prompt configured)")])
-    if not ctx.config.claude.enabled:
-        return Section(title, [Text("(set [claude] api_key)")])
+    claude = ctx.config.claude
+    if not claude.active:
+        msg = "(AI disabled)" if not claude.enabled else "(set [claude] api_key)"
+        return Section(title, [Text(msg)])
 
     max_chars = int(section_cfg.get("max_chars", DEFAULT_MAX_CHARS))
     # ~3 chars/token is conservative; add headroom so it isn't cut mid-thought
@@ -48,7 +50,7 @@ def build(section_cfg, ctx) -> Section | None:
         "characters."
     )
     text = generate(
-        ctx.config.claude,
+        claude,
         system=system,
         prompt=prompt,
         max_tokens=max_tokens,
@@ -56,7 +58,7 @@ def build(section_cfg, ctx) -> Section | None:
         ttl=86_400,
     )
     if not text:
-        return Section(title, [Text("(unavailable)")])
+        return Section(title, [Text("(AI unavailable)")])
 
     text = _truncate(text, max_chars)
     # Keep line/paragraph breaks as separate items (each Text wraps on its own).

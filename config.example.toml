@@ -1,169 +1,158 @@
 # Daily Brief configuration.
 #
-# Copy this file to `config.toml` and edit it for your setup:
-#     cp config.example.toml config.toml
+# Copy this file to `config.toml` and edit it (or use the setup web UI, which
+# writes this file for you). `config.toml` is gitignored so your real device
+# IDs / API keys / calendar URLs stay local.
 #
-# `config.toml` is gitignored so your real device IDs / API keys / calendar
-# URLs stay local.
+# Model:  section (a content block) -> brief (an ordered set of sections)
+#         -> schedule (prints a brief at a time). Globals below are shared by
+#         all briefs.
 
 [printer]
-# Which python-escpos backend to use:
-#   "dummy"  -> no hardware; output is captured/discarded. Use this on your laptop.
-#   "usb"    -> printer enumerates as a raw USB ESC/POS device (see [printer.usb]).
-#   "serial" -> printer (or its USB-serial adapter) appears as /dev/tty* (see [printer.serial]).
-backend = "dummy"
-
-# Optional escpos capabilities profile name. Leave as "default" unless you know
-# your printer's specific profile. See: python -m escpos.cli list-profiles
+backend = "dummy"          # "dummy" (laptop) | "usb" | "serial"
 profile = "default"
 
 [printer.usb]
-# Find these with:  python scripts/printer_test.py --list-usb   (run on the Pi)
-# Values are hex. The EM5822H enumerates as 1d81:5721.
-vendor_id  = 0x1d81
+vendor_id  = 0x1d81        # find with: python scripts/printer_test.py --list-usb
 product_id = 0x5721
-# Some printers need explicit interface / endpoints; usually auto-detected.
-# in_ep  = 0x81
-# out_ep = 0x03
 
 [printer.serial]
-# Typical on a Pi: /dev/ttyUSB0 (USB-serial adapter) or /dev/serial0 (GPIO UART).
 port     = "/dev/ttyUSB0"
 baudrate = 19200
 
 [location]
-# Used by the weather and daylight sections. Decimal degrees + an IANA tz name.
-lat = 40.4168
+lat = 40.4168              # used by weather, daylight, planets
 lon = -3.7038
 tz  = "Europe/Madrid"
 
 [render]
-# The brief is drawn as one bitmap and printed as an image, so it can use a
-# modern TrueType font instead of the printer's built-in receipt font.
-dot_width    = 384        # 58mm @ 203 dpi (use 576 for an 80mm printer)
-body_size    = 22         # body text pixel size
-heading_size = 26         # section heading pixel size
-margin       = 8          # inner left/right margin in dots
-# Optional: override the bundled Inter font with your own TTF paths.
-# font      = "assets/fonts/Inter-Regular.ttf"
-# font_bold = "assets/fonts/Inter-Bold.ttf"
+dot_width    = 384         # 58mm @ 203 dpi (use 576 for 80mm)
+body_size    = 22
+heading_size = 26
+margin       = 8
 
 [claude]
-# Optional. With an API key, the header greeting is written fresh each day and
-# the word-of-the-day gets a Claude definition + example sentence. Without a
-# key (or if the `anthropic` package isn't installed) both fall back to the
-# built-in behavior — nothing breaks.
-#   Requires:  pip install anthropic   (optional; not in requirements.txt)
-#   Get a key: https://console.anthropic.com
+# `enabled` is the master AI toggle. When on AND a key is set, AI is used by the
+# greeting, word of the day, the `ai` section, and Claude ASCII art; if a call
+# fails those show "(AI unavailable)" instead of the local version. Turn it off
+# (or leave the key unset) to use the local behavior everywhere.
+enabled = true
 # api_key = "sk-ant-..."
-# One short call per feature per day. Opus is the default; Haiku is ~5x cheaper
-# and plenty for these tiny tasks:
-# model = "claude-haiku-4-5"
+model = "claude-opus-4-8"  # or "claude-haiku-4-5" (cheaper)
+
+[network]
+# Setup mode (AP + web server). The button re-opens setup after WiFi is joined.
+ap_ssid     = "daily-brief-setup"
+ap_password = "briefme123"
+button_gpio = 17
+
+[web]
+# The control console runs at all times (password-protected). On first visit
+# you set the password; `password_hash` and `secret_key` are then written here
+# automatically — don't hand-edit them.
+host = "0.0.0.0"
+port = 80
 
 # ---------------------------------------------------------------------------
-# Sections. FILE ORDER = PRINT ORDER. Move a [[sections]] block to reorder it;
-# set `enabled = false` to skip one without deleting its config.
+# Briefs. Each is a named, ordered set of sections (file order = print order).
+# Disable a section with `enabled = false`. Header icons are off by default
+# except birthdays; add `icon = "<key>"` to any section to show one.
 # ---------------------------------------------------------------------------
 
-[[sections]]
-type = "weather"
-title = "WEATHER"
-enabled = true
-api_key = "YOUR_OPENWEATHERMAP_KEY"   # https://openweathermap.org/api (free tier)
-# Always Celsius. Shows today's high/low + a representative pictogram.
+[[briefs]]
+name = "morning"
 
-# Header icons are off by default except for birthdays. Add `icon = "<key>"` to
-# any section to show one (keys: cake, calendar, sun, cloud, hourglass, book,
-# lightbulb, smiley, moon, satellite, planet, art), or `icon = ""` to hide it.
-[[sections]]
-type = "birthdays"
-title = "BIRTHDAYS"
-enabled = true
-# Google Calendar -> Settings -> "Secret address in iCal format", or any
-# published .ics URL. A dedicated Birthdays/Contacts calendar works best.
-ical_url = "https://calendar.google.com/calendar/ical/.../basic.ics"
-horizon_days = 0          # 0 = today only; N = also list the next N days
-checkbox = true           # draw a checkbox so you can tick people off
+  [[briefs.sections]]
+  type = "greeting"          # the big header: greeting + date line
+  use_claude = true          # AI greeting when AI is on; else a rotating built-in
+  style = "morning"          # morning | afternoon | evening | weekend
+  # prompt = "..."           # custom AI prompt (overrides style)
+  date_format = "%A, %d %B %Y"   # strftime; add " · %H:%M" to show the time
 
-[[sections]]
-type = "events"
-title = "UPCOMING"
-enabled = true
-ical_url = "https://calendar.google.com/calendar/ical/.../basic.ics"
-horizon_days = 3          # how many days ahead to list
-max_items = 6             # cap the number of events printed
+  [[briefs.sections]]
+  type = "weather"
+  api_key = "YOUR_OPENWEATHERMAP_KEY"
 
-[[sections]]
-type = "oncall"
-title = "ON CALL"
-enabled = true
-ical_url = "https://calendar.google.com/calendar/ical/.../basic.ics"
-keyword = "primary"       # only events whose title contains this (case-insensitive)
-horizon_days = 14         # how far ahead to look for your next shift
-# hide_when_off = false   # set true to omit the section when you're not on call
-# force_state = "today"   # TESTING ONLY: force "today" | "upcoming" | "off"
+  [[briefs.sections]]
+  type = "birthdays"
+  ical_url = "https://calendar.google.com/calendar/ical/.../basic.ics"
+  horizon_days = 0
+  checkbox = true
 
-[[sections]]
-type = "onthisday"
-title = "ON THIS DAY"
-enabled = true
-max_items = 1             # how many historical events to show
-min_age_years = 50        # skip recent news; only events at least this old
+  [[briefs.sections]]
+  type = "events"
+  title = "UPCOMING"
+  ical_url = "https://calendar.google.com/calendar/ical/.../basic.ics"
+  horizon_days = 3
+  max_items = 6
 
-[[sections]]
-type = "word"
-title = "WORD OF THE DAY"
-enabled = true
+  [[briefs.sections]]
+  type = "oncall"
+  title = "ON CALL"
+  ical_url = "https://calendar.google.com/calendar/ical/.../basic.ics"
+  keyword = "primary"
+  horizon_days = 14
 
-[[sections]]
-type = "trivia"
-title = "TRIVIA"
-enabled = true
-mode = "today"            # today (fact of the day) | random
+  [[briefs.sections]]
+  type = "onthisday"
+  title = "ON THIS DAY"
+  max_items = 1
+  min_age_years = 50
 
-[[sections]]
-type = "daylight"
-title = "DAYLIGHT"
-enabled = true
+  [[briefs.sections]]
+  type = "word"
+  title = "WORD OF THE DAY"
+  use_claude = true        # AI definition + example (when AI is on); else free dictionary
 
-[[sections]]
-type = "joke"
-title = "DAD JOKE"
-enabled = true
+  [[briefs.sections]]
+  type = "daylight"
+  title = "DAYLIGHT"
 
-# A freeform section: your prompt, fed to Claude, capped to a length you choose.
-# Needs a [claude] api_key (above). Disabled here by default.
-[[sections]]
-type = "ai"
-title = "TODAY'S HAIKU"
-enabled = false
-prompt = "Write a single haiku about the morning."
-max_chars = 200           # hard cap on the printed answer
-
-# A "rotate" section cycles through its choices, one per day. Great for the
-# space images so you get a different one each morning. Preview them all with:
-#     python -m daily_brief --dry-run --all-rotations
-[[sections]]
-type = "rotate"
-enabled = true
-
-  [[sections.choices]]
-  type = "moon"            # tonight's moon phase, drawn (no API key)
+  # Space sections (each optional): moon phase, ISS map, tonight's planets.
+  [[briefs.sections]]
+  type = "moon"
   title = "MOON PHASE"
 
-  [[sections.choices]]
-  type = "iss"             # live ISS position on a world map (no API key)
-  title = "ISS TRACKER"
+  # Add these too if you like:
+  # [[briefs.sections]]
+  # type = "iss"
+  # title = "ISS TRACKER"
+  #
+  # [[briefs.sections]]
+  # type = "planets"
+  # title = "TONIGHT'S PLANETS"
 
-  [[sections.choices]]
-  type = "planets"         # planets above the horizon tonight (no API key)
-  title = "TONIGHT'S PLANETS"
+  [[briefs.sections]]
+  type = "ascii"
+  title = "ASCII ART"
+  # use_claude = true
+  # subject = "a sailboat"
 
-# A different ASCII-art doodle each day (offline, drawn in a monospace font).
-# Add your own pieces to daily_brief/ascii_art.py.
-[[sections]]
-type = "ascii"
-title = "ASCII ART"
+  [[briefs.sections]]
+  type = "joke"
+  title = "DAD JOKE"
+
+# A tiny second brief, for a midday pick-me-up.
+[[briefs]]
+name = "midday-joke"
+
+  [[briefs.sections]]
+  type = "joke"
+  title = "MIDDAY JOKE"
+
+# ---------------------------------------------------------------------------
+# Schedules: print a brief at a time. `days` omitted = every day.
+# ---------------------------------------------------------------------------
+
+[[schedules]]
+name = "Morning brief"
+brief = "morning"
+time = "07:30"
 enabled = true
-# use_claude = true       # let Claude draw the art instead (needs [claude] api_key)
-# subject = "a sailboat"  # fix the subject; omit to let Claude pick one each day
+
+[[schedules]]
+name = "Midday joke"
+brief = "midday-joke"
+time = "12:00"
+days = ["mon", "tue", "wed", "thu", "fri"]
+enabled = true

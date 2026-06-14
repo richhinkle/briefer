@@ -9,7 +9,7 @@ Falls back to the bundled gallery if Claude is unavailable.
 from __future__ import annotations
 
 from ..ascii_art import art_for
-from ..brief import Mono, Section
+from ..brief import Mono, Section, Text
 from ..llm import generate
 
 _CLAUDE_SYSTEM = "You are an expert ASCII artist. You output only ASCII art, nothing else."
@@ -51,11 +51,13 @@ def _claude_art(cfg, section_cfg, ctx) -> str | None:
 def build(section_cfg, ctx) -> Section | None:
     title = section_cfg.title or "ASCII ART"
 
-    if section_cfg.get("use_claude") and ctx.config.claude.enabled:
+    # use_claude + AI on: draw with Claude; surface failure rather than the
+    # gallery. (AI off / no key just uses the gallery — not a failure.)
+    if section_cfg.get("use_claude") and ctx.config.claude.active:
         art = _claude_art(ctx.config.claude, section_cfg, ctx)
         if art:
             return Section(title, [Mono(art)])
-        # else fall through to the bundled gallery
+        return Section(title, [Text("(AI art unavailable)")])
 
     _name, art = art_for(ctx.now.date())
     return Section(title, [Mono(art)])

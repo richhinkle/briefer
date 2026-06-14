@@ -11,7 +11,14 @@ python-dateutil>=2.8         # timezone-aware date math
 astral>=3.2                  # local sunrise/sunset + daylight length (offline)
 ephem>=4.1                   # moon phase + planet positions (offline)
 
-# Optional: enables the Claude-written greeting + word-of-the-day definition.
-# Not installed by default — the SDK pulls pydantic-core (Rust), which can be
-# painful on a Pi Zero W (armv6). The brief degrades gracefully without it.
-#   pip install anthropic
+# Web console + scheduler daemon.
+flask>=3.0                   # control-console web UI (also provides werkzeug auth)
+tomli-w>=1.0                 # write config.toml from the web UI (tomllib reads)
+
+# Claude features: greeting, word definitions, the `ai` section, ASCII art.
+# (arm64 wheels install cleanly on the Zero 2 W; degrades gracefully if no key.)
+anthropic>=0.40
+
+# Pi-only, install via apt (GPIO setup button); optional, degrades if absent:
+#   sudo apt install python3-gpiozero python3-lgpio
+# AP / WiFi management uses the system `nmcli` (NetworkManager, Bookworm) — no pip dep.
