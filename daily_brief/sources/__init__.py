@@ -20,7 +20,9 @@ from datetime import datetime
 
 from ..brief import Section, Text
 from ..config import Config, SectionConfig
-from .specs import AVAILABLE_ICONS, SECTION_SPECS, Field, SectionSpec  # re-export
+from .specs import (  # re-export
+    AVAILABLE_ICONS, SECTION_SPECS, Field, SectionSpec, strftime_legend,
+)
 
 log = logging.getLogger(__name__)
 
@@ -100,6 +102,7 @@ def _register() -> dict:
         daylight,
         greeting,
         joke,
+        lirr,
         oncall,
         onthisday,
         space,
@@ -118,6 +121,7 @@ def _register() -> dict:
         "trivia": trivia.build,
         "daylight": daylight.build,
         "joke": joke.build,
+        "lirr": lirr.build,
         "oncall": oncall.build,
         "iss": space.build_iss,
         "moon": space.build_moon,

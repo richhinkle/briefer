@@ -63,6 +63,27 @@ class RenderConfig:
     body_size: int = 22
     heading_size: int = 26
     margin: int = 8  # left/right inner margin in dots
+    time_format: str = "24h"  # "24h" (military) or "12h" (am/pm)
+    temp_unit: str = "C"  # weather display: "C" (°C) or "F" (°F)
+
+    def format_temp(self, celsius) -> str:
+        """Render a Celsius value as a degree string honouring `temp_unit`."""
+        if celsius is None:
+            return "--"
+        if self.temp_unit == "F":
+            return f"{round(celsius * 9 / 5 + 32)}°F"
+        return f"{round(celsius)}°C"
+
+    def format_time(self, dt) -> str:
+        """Render a datetime/time as a clock string honouring `time_format`.
+
+        24h -> "07:05"; 12h -> "7:05 AM" (leading zero stripped for a cleaner
+        look, since %I is zero-padded and %-I isn't portable).
+        """
+        if self.time_format == "12h":
+            s = dt.strftime("%I:%M %p")
+            return s[1:] if s.startswith("0") else s
+        return dt.strftime("%H:%M")
 
     def resolve_font(self, bold: bool = False) -> str:
         """Return an absolute path to the requested font face.
@@ -260,6 +281,8 @@ def _from_dict(data: dict) -> Config:
         body_size=int(render_raw.get("body_size", 22)),
         heading_size=int(render_raw.get("heading_size", 26)),
         margin=int(render_raw.get("margin", 8)),
+        time_format=render_raw.get("time_format", "24h"),
+        temp_unit=render_raw.get("temp_unit", "C"),
     )
     claude = ClaudeConfig(
         api_key=claude_raw.get("api_key"),
@@ -350,6 +373,8 @@ def to_dict(config: Config) -> dict:
             "body_size": config.render.body_size,
             "heading_size": config.render.heading_size,
             "margin": config.render.margin,
+            "time_format": config.render.time_format,
+            "temp_unit": config.render.temp_unit,
         },
         "claude": {"model": config.claude.model, "enabled": config.claude.enabled},
         "network": {

@@ -10,6 +10,31 @@ the Title/Icon fields for it.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
+
+# Common strftime codes shown as a legend next to date-format fields, so people
+# unfamiliar with strftime can assemble their own line. Examples are rendered
+# live from the current time when the legend is built.
+STRFTIME_CODES: tuple[tuple[str, str], ...] = (
+    ("%A", "Weekday"),
+    ("%a", "Weekday, short"),
+    ("%d", "Day of month, 01–31"),
+    ("%B", "Month"),
+    ("%b", "Month, short"),
+    ("%m", "Month number, 01–12"),
+    ("%Y", "Year, 4-digit"),
+    ("%y", "Year, 2-digit"),
+    ("%H", "Hour, 24-hour"),
+    ("%I", "Hour, 12-hour"),
+    ("%M", "Minute"),
+    ("%p", "AM / PM"),
+)
+
+
+def strftime_legend(now: datetime | None = None) -> list[tuple[str, str, str]]:
+    """Return (code, meaning, live-example) rows for the date-format legend."""
+    now = now or datetime.now()
+    return [(code, meaning, now.strftime(code)) for code, meaning in STRFTIME_CODES]
 
 # Header icon keys available in assets/icons/ ("" = no icon).
 AVAILABLE_ICONS = [
@@ -50,12 +75,13 @@ SECTION_SPECS: dict[str, SectionSpec] = {
                   choices=("morning", "afternoon", "evening", "weekend")),
             Field("prompt", "Custom AI prompt", "textarea",
                   help="Overrides the style preset."),
-            Field("date_format", "Date format", "text", "%A, %d %B %Y",
-                  "strftime, e.g. %A, %d %B %Y · %H:%M"),
+            Field("date_format", "Date format", "strftime", "%A, %d %B %Y",
+                  "The line under the greeting. Mix codes and plain text, "
+                  "e.g. %A, %d %B %Y · %H:%M"),
         ],
     ),
     "weather": SectionSpec(
-        "weather", "Weather", "Today's high/low (°C) + a pictogram.",
+        "weather", "Weather", "Today's high/low + a pictogram (°C/°F in Settings).",
         fields=[Field("api_key", "OpenWeatherMap API key", "secret",
                       help="Free key from openweathermap.org. Uses [location].")],
     ),
@@ -73,6 +99,18 @@ SECTION_SPECS: dict[str, SectionSpec] = {
             Field("ical_url", "iCal URL", "text", help="A published .ics URL (webcal:// ok)."),
             Field("horizon_days", "Days ahead", "int", 3),
             Field("max_items", "Max events", "int", 6),
+        ],
+    ),
+    "lirr": SectionSpec(
+        "lirr", "LIRR trains",
+        "Next LIRR departures between two stations, with live delays.",
+        fields=[
+            Field("origin", "From station", "text", "Port Washington",
+                  "Station name exactly as it appears in the LIRR schedule."),
+            Field("destination", "To station", "text", "Penn Station"),
+            Field("count", "How many trains", "int", 4),
+            Field("realtime", "Show live delays", "bool", True,
+                  "Adds delays from the MTA realtime feed; falls back to schedule."),
         ],
     ),
     "oncall": SectionSpec(

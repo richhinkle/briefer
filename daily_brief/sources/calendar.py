@@ -116,7 +116,7 @@ def build_events(section_cfg, ctx) -> Section | None:
         day = _day_label(d, today)
         dt = comp.get("DTSTART").dt
         if isinstance(dt, datetime):
-            label = f"{day} {dt:%H:%M} {summary}"
+            label = f"{day} {ctx.config.render.format_time(dt)} {summary}"
         else:
             label = f"{day} {summary}"
         items.append(Bullet(label))

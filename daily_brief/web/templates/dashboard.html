@@ -10,7 +10,6 @@
       <h2>{{ b.name }}</h2>
       <span class="muted">{{ b.sections|length }} section{{ '' if b.sections|length == 1 else 's' }}</span>
     </div>
-    <img class="preview" src="{{ url_for('preview', name=b.name) }}" alt="preview of {{ b.name }}" loading="lazy">
     <div class="row">
       <a class="btn" href="{{ url_for('brief_edit', name=b.name) }}">Edit</a>
       <form method="post" action="{{ url_for('print_now', name=b.name) }}">

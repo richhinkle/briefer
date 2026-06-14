@@ -51,6 +51,17 @@
             </label>
           {% elif f.kind == 'textarea' %}
             <label class="wide">{{ f.label }}<textarea name="{{ name }}" rows="3">{{ val or '' }}</textarea></label>
+          {% elif f.kind == 'strftime' %}
+            <label class="wide">{{ f.label }}<input name="{{ name }}" value="{{ val or '' }}"></label>
+            <details class="legend">
+              <summary>Format codes</summary>
+              <table>
+                {% for code, meaning, example in strftime_legend %}
+                <tr><td><code>{{ code }}</code></td><td>{{ meaning }}</td><td>{{ example }}</td></tr>
+                {% endfor %}
+              </table>
+              <small>Anything else (spaces, commas, <code>·</code>) prints as-is.</small>
+            </details>
           {% else %}
             <label class="wide">{{ f.label }}<input name="{{ name }}" value="{{ val or '' }}"></label>
           {% endif %}
@@ -71,7 +82,12 @@
 </form>
 
 <h2>Preview</h2>
-<img class="preview" src="{{ url_for('preview', name=brief.name) }}" alt="preview">
+<p class="muted" id="preview-empty">Not rendered automatically — generate the latest on demand.</p>
+<div class="row">
+  <button type="button" class="btn secondary" id="refresh-preview"
+          data-base="{{ url_for('preview', name=brief.name) }}">Preview</button>
+</div>
+<img class="preview" id="preview-img" alt="brief preview" hidden>
 {% endblock %}
 
 {% block scripts %}

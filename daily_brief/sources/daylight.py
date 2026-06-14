@@ -44,8 +44,8 @@ def build(section_cfg, ctx) -> Section | None:
     return Section(
         title,
         [
-            KeyVal("Sunrise", s["sunrise"].strftime("%H:%M")),
-            KeyVal("Sunset", s["sunset"].strftime("%H:%M")),
+            KeyVal("Sunrise", ctx.config.render.format_time(s["sunrise"])),
+            KeyVal("Sunset", ctx.config.render.format_time(s["sunset"])),
             KeyVal("Daylight", f"{_fmt_hm(length)} {delta}"),
         ],
     )

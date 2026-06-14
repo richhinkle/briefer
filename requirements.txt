@@ -10,6 +10,7 @@ recurring-ical-events>=2.1   # expand recurring events (yearly birthdays, etc.)
 python-dateutil>=2.8         # timezone-aware date math
 astral>=3.2                  # local sunrise/sunset + daylight length (offline)
 ephem>=4.1                   # moon phase + planet positions (offline)
+gtfs-realtime-bindings>=1.0  # parse the LIRR realtime feed (delays); schedule works without it
 
 # Web console + scheduler daemon.
 flask>=3.0                   # control-console web UI (also provides werkzeug auth)

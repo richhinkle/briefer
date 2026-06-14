@@ -68,6 +68,25 @@ def cache_set(key: str, value) -> None:
     _write_cache(key, value)
 
 
+def cache_clear() -> int:
+    """Delete every cached entry (HTTP + Claude). Returns how many were removed.
+
+    Used to force a fully fresh rebuild (e.g. the web UI's "force refresh"),
+    so the next build refetches everything instead of serving cached copies.
+    """
+    removed = 0
+    try:
+        for path in CACHE_DIR.glob("*.json"):
+            try:
+                path.unlink()
+                removed += 1
+            except OSError as exc:
+                log.debug("cache delete failed for %s: %s", path, exc)
+    except OSError as exc:
+        log.debug("cache clear failed: %s", exc)
+    return removed
+
+
 def _fetch(
     url: str,
     *,

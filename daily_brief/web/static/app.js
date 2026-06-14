@@ -20,3 +20,33 @@
   form.addEventListener("submit", syncOrder);
   syncOrder();
 })();
+
+// On-demand preview: previews aren't rendered on page load. Clicking "Preview"
+// evicts the server caches (?fresh=1) and busts the browser cache with a
+// timestamp so the <img> refetches a freshly rendered brief.
+(function () {
+  var btn = document.getElementById("refresh-preview");
+  var img = document.getElementById("preview-img");
+  var empty = document.getElementById("preview-empty");
+  if (!btn || !img) return;
+
+  btn.addEventListener("click", function () {
+    var base = btn.getAttribute("data-base");
+    var label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Rendering…";
+
+    function done() {
+      btn.disabled = false;
+      btn.textContent = label;
+      img.onload = img.onerror = null;
+    }
+    img.onload = function () {
+      if (empty) empty.hidden = true;
+      img.hidden = false;
+      done();
+    };
+    img.onerror = done;
+    img.src = base + "?fresh=1&t=" + Date.now();
+  });
+})();

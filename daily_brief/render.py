@@ -56,6 +56,7 @@ class Canvas:
         self.f_bold = ImageFont.truetype(bold, cfg.body_size)
         self.f_body = ImageFont.truetype(reg, cfg.body_size)
         self.mono_path = cfg.resolve_mono()
+        self.format_temp = cfg.format_temp  # honors the configured °C/°F unit
 
         self.img = Image.new("L", (self.W, SCRATCH_HEIGHT), 255)
         self.draw = ImageDraw.Draw(self.img)
@@ -178,9 +179,7 @@ class Canvas:
             self.img.paste(icon, (self.x0, start_y))
             text_x = self.x0 + ICON_SIZE + 14
 
-        hi = "--" if item.hi is None else f"{round(item.hi)}"
-        lo = "--" if item.lo is None else f"{round(item.lo)}"
-        temp = f"H {hi}°C   L {lo}°C"
+        temp = f"H {self.format_temp(item.hi)}   L {self.format_temp(item.lo)}"
 
         self.y = start_y + 8
         self.draw.text((text_x, self.y), temp, font=self.f_big, fill=0)

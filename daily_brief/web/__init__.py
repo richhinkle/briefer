@@ -26,7 +26,9 @@ from ..config import (
     SectionConfig, load_config, save_config,
 )
 from ..render import render_brief
-from ..sources import AVAILABLE_ICONS, DEFAULT_SECTION_ICONS, SECTION_SPECS
+from ..sources import (
+    AVAILABLE_ICONS, DEFAULT_SECTION_ICONS, SECTION_SPECS, strftime_legend,
+)
 from .forms import apply_section_form, parse_globals_form
 
 DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
@@ -150,6 +152,7 @@ def create_app(config_path: str | Path | None = None) -> Flask:
         return render_template(
             "brief.html", cfg=cfg, brief=brief, specs=SECTION_SPECS,
             default_icons=DEFAULT_SECTION_ICONS, icons=AVAILABLE_ICONS,
+            strftime_legend=strftime_legend(),
         )
 
     # --- schedules ---------------------------------------------------------
@@ -228,6 +231,10 @@ def create_app(config_path: str | Path | None = None) -> Flask:
         brief = cfg.brief(name)
         if brief is None:
             abort(404)
+        if request.args.get("fresh"):  # force a fully fresh rebuild
+            from ..sources._http import cache_clear
+
+            cache_clear()
         img = render_brief(None, build_brief(cfg, brief), cfg.render)
         buf = io.BytesIO()
         img.save(buf, format="PNG")

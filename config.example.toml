@@ -30,6 +30,8 @@ dot_width    = 384         # 58mm @ 203 dpi (use 576 for 80mm)
 body_size    = 22
 heading_size = 26
 margin       = 8
+time_format  = "24h"       # clock display: "24h" (military) or "12h" (am/pm)
+temp_unit    = "C"         # weather units: "C" (°C) or "F" (°F)
 
 [claude]
 # `enabled` is the master AI toggle. When on AND a key is set, AI is used by the
@@ -85,6 +87,14 @@ name = "morning"
   ical_url = "https://calendar.google.com/calendar/ical/.../basic.ics"
   horizon_days = 3
   max_items = 6
+
+  [[briefs.sections]]
+  type = "lirr"               # next LIRR trains between two stations (live delays)
+  title = "LIRR"
+  origin = "Port Washington"
+  destination = "Penn Station"
+  count = 4
+  realtime = true
 
   [[briefs.sections]]
   type = "oncall"
