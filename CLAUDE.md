@@ -113,8 +113,24 @@ One `config.toml` holds global tables plus `[[briefs]]` (each with nested
   returns. The loop also re-derives `ap_active` from `hotspot_active()` each tick.
 - `daily_brief/web/` — Flask setup UI (`create_app`), server-rendered Jinja +
   vendored SortableJS (no build). Edits briefs/schedules/settings/WiFi and writes
-  `config.toml`. Run standalone: `python -m daily_brief.web`.
-- `systemd/daily-brief.service` — runs the daemon as root (nmcli + GPIO need it).
+  `config.toml`. The **Software** page uploads a release tarball and shows the
+  last update result (see `updater.py`). Run standalone: `python -m daily_brief.web`.
+- `daily_brief/updater.py` — **remote software update via console upload.** The
+  Software page stages an uploaded `.tgz` to `<base>/staging/pending.tgz` and
+  triggers the separate `daily-brief-update` oneshot unit; `apply_pending()`
+  unpacks it to a fresh `releases/<version>/`, builds its venv, **smoke-tests**
+  it (`--dry-run` against the live config) before going live, then atomically
+  flips the `current` symlink and restarts the daemon — **health-checking the
+  console and rolling back to the previous release if the new one won't start.**
+  The layout is anchored on the dir holding `config.toml` (the install base), so
+  `config.toml` lives *outside* the swappable releases and is never touched. Run
+  by the *old* code, so a broken build can't break the updater. Off a
+  release-based install (`is_managed()` False, e.g. a dev checkout) the Software
+  page hides the upload form. `scripts/setup-releases.sh` migrates a plain
+  checkout to the layout; `scripts/build-release.sh` builds the tarball.
+- `systemd/daily-brief.service` — runs the daemon as root (nmcli + GPIO need it);
+  points at `current/` + an out-of-releases `config.toml`.
+  `systemd/daily-brief-update.service` — oneshot that runs `updater.apply_pending`.
 - `scripts/printer_test.py` — hardware smoke test + `--list-usb`.
   `scripts/gen_weather_icons.py` — regenerate the weather pictograms.
 

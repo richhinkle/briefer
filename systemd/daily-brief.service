@@ -15,8 +15,11 @@ After=NetworkManager.service
 
 [Service]
 Type=simple
-WorkingDirectory=/home/briefer/briefer
-ExecStart=/home/briefer/briefer/.venv/bin/python -m daily_brief.daemon --config /home/briefer/briefer/config.toml
+# Release-based layout: `current` is a symlink to the active release, and
+# config.toml lives outside it so updates never disturb the device's settings.
+# (For a plain checkout, point both paths at the checkout instead.)
+WorkingDirectory=/home/briefer/current
+ExecStart=/home/briefer/current/.venv/bin/python -m daily_brief.daemon --config /home/briefer/config.toml
 Restart=on-failure
 RestartSec=5
 

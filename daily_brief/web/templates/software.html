@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="{{ url_for('dashboard') }}">&larr; Briefs</a></p>
+<h1>Software</h1>
+
+<p>Running version <strong>{{ version }}</strong>.</p>
+
+{% if status %}
+  {% set tone = {'success': 'ok', 'rolled_back': 'error', 'failed': 'error', 'running': 'ok'} %}
+  <div class="flash {{ tone.get(status.result, 'ok') }}">
+    <strong>Last update:</strong> {{ status.message }}
+    {% if status.time %}<br><small>{{ status.time }}</small>{% endif %}
+  </div>
+{% endif %}
+
+{% if managed %}
+<form method="post" enctype="multipart/form-data">
+  <fieldset><legend>Install an update</legend>
+    <div class="fields">
+      <label>Release archive (<code>.tgz</code>)
+        <input type="file" name="tarball" accept=".tgz,.tar.gz" required>
+      </label>
+    </div>
+    <small class="help">Upload a release archive sent to you. It's installed into
+    a fresh slot and <strong>smoke-tested</strong> before going live; the printer
+    keeps running the current version until the new one passes. After it goes
+    live the console restarts and self-checks — if the new version won't start,
+    it automatically rolls back to this one. Your settings, WiFi, and schedules
+    are never touched.</small>
+  </fieldset>
+  <button class="btn" type="submit">Upload &amp; install</button>
+</form>
+{% else %}
+<div class="flash error">
+  This install isn't release-based, so it can't self-update from the console.
+  Update it from the command line — see <code>INSTALL.md → Updating</code>.
+</div>
+{% endif %}
+{% endblock %}

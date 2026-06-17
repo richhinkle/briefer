@@ -1,0 +1,20 @@
+# One-shot installer for an uploaded release. The console (web UI) stages the
+# tarball, then triggers this unit with `systemctl start daily-brief-update`.
+#
+# It runs as a *separate* unit (not a child of daily-brief) so that restarting
+# the app mid-update can't kill the installer. It executes the CURRENTLY running
+# code (current/.venv) to perform the swap, so even a broken new build can't
+# break the mechanism that installs — and rolls back — releases.
+#
+# Install alongside daily-brief.service:
+#   sudo cp systemd/daily-brief-update.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+
+[Unit]
+Description=Daily Brief release installer (atomic, with rollback)
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/briefer/current
+ExecStart=/home/briefer/current/.venv/bin/python -m daily_brief.updater \
+  --config /home/briefer/config.toml --verbose

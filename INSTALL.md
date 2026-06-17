@@ -153,6 +153,8 @@ sudo systemctl restart daily-brief    # after upgrading code
 
 ## Updating
 
+### Hands-on (your own Pi, on your LAN)
+
 ```bash
 # from your laptop:
 ./scripts/sync-to-pi.sh               # (or git pull on the Pi)
@@ -160,6 +162,42 @@ sudo systemctl restart daily-brief    # after upgrading code
 cd ~/briefer && source .venv/bin/activate && pip install -r requirements.txt
 sudo systemctl restart daily-brief
 ```
+
+### Remote (a device at someone else's house)
+
+For devices you can't SSH into, updates are done by **uploading a release
+tarball through the console** (Software page). The install is atomic and
+self-healing: the new version is built and smoke-tested in its own slot before
+going live, and if it fails to start the device automatically rolls back to the
+previous version. The friend's `config.toml` (WiFi, keys, schedules) is never
+touched.
+
+**One-time: convert the device to the release layout.** On the Pi:
+
+```bash
+cd ~/briefer
+sudo -u briefer ./scripts/setup-releases.sh    # builds releases/<v>, current, staging
+sudo cp ~/current/systemd/daily-brief.service        /etc/systemd/system/
+sudo cp ~/current/systemd/daily-brief-update.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl restart daily-brief
+```
+
+This moves `config.toml` up to `~/config.toml` and points the service at
+`~/current` (a symlink to the active release).
+
+**Each release: build a tarball and send it.** On your laptop:
+
+```bash
+./scripts/build-release.sh             # writes dist/briefer-<version>.tgz
+```
+
+Send that `.tgz` to your friend. They open the console (`http://<hostname>.local`)
+on their WiFi, go to **Software**, upload the file, and wait ~30s. The Software
+page shows the result (and rolls back automatically if the new build won't run).
+
+> The console is LAN-only, so the friend does the upload from their network — you
+> can't reach it from afar without a tunnel (e.g. Tailscale).
 
 ## Troubleshooting
 

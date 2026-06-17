@@ -199,6 +199,39 @@ def create_app(config_path: str | Path | None = None) -> Flask:
             return redirect(url_for("settings"))
         return render_template("settings.html", cfg=cfg)
 
+    # --- software update ---------------------------------------------------
+
+    @app.route("/software", methods=["GET", "POST"])
+    def software():
+        from .. import updater
+
+        p = updater.paths_for(app.config["CONFIG_PATH"])
+        if request.method == "POST":
+            f = request.files.get("tarball")
+            if not f or not f.filename:
+                flash("Choose a .tgz file to upload.", "error")
+            elif not f.filename.endswith((".tgz", ".tar.gz")):
+                flash("Expected a .tgz / .tar.gz release archive.", "error")
+            elif not updater.is_managed(p):
+                flash("This install isn't release-based, so it can't self-update. "
+                      "See INSTALL.md → Updating.", "error")
+            else:
+                updater.stage_upload(p, f.stream)
+                ok, msg = updater.trigger()
+                flash(
+                    msg + (" The console will restart — reconnect in ~30s and "
+                           "check this page for the result." if ok else ""),
+                    "ok" if ok else "error",
+                )
+            return redirect(url_for("software"))
+
+        return render_template(
+            "software.html",
+            version=updater.current_version(),
+            managed=updater.is_managed(p),
+            status=updater.read_status(p),
+        )
+
     # --- wifi (setup mode) -------------------------------------------------
 
     @app.route("/wifi", methods=["GET", "POST"])
