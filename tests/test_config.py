@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
-from daily_brief.config import load_config, save_config
+from daily_brief.config import Config, WebConfig, load_config, save_config
+
+
+def test_allow_remote_update_defaults_off_and_round_trips(tmp_path):
+    # Default is off, and an off value isn't written to keep config minimal.
+    assert WebConfig().allow_remote_update is False
+    out = tmp_path / "config.toml"
+    save_config(Config(web=WebConfig(allow_remote_update=True)), out)
+    assert load_config(out).web.allow_remote_update is True
+    assert "allow_remote_update = true" in out.read_text()
 
 
 def test_example_config_has_briefs_and_schedules():

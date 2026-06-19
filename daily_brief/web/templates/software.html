@@ -13,7 +13,20 @@
   </div>
 {% endif %}
 
-{% if managed %}
+{% if not managed %}
+<div class="flash error">
+  This install isn't release-based, so it can't self-update from the console.
+  Update it from the command line — see <code>INSTALL.md → Updating</code>.
+</div>
+{% elif not allow %}
+<div class="flash error">
+  Remote updates are <strong>disabled</strong> (the default). Installing an
+  uploaded build is risky, so it's off unless you opt in: set
+  <code>[web] allow_remote_update = true</code> in
+  <code>/opt/daily-brief/config.toml</code> and restart the service. Otherwise
+  update from the command line — see <code>INSTALL.md → Updating</code>.
+</div>
+{% else %}
 <form method="post" enctype="multipart/form-data">
   <fieldset><legend>Install an update</legend>
     <div class="fields">
@@ -24,10 +37,5 @@
   </fieldset>
   <button class="btn" type="submit">Upload &amp; install</button>
 </form>
-{% else %}
-<div class="flash error">
-  This install isn't release-based, so it can't self-update from the console.
-  Update it from the command line — see <code>INSTALL.md → Updating</code>.
-</div>
 {% endif %}
 {% endblock %}

@@ -5,7 +5,9 @@ with a few `nmcli` calls. Everything here degrades safely: if `nmcli` isn't
 present (e.g. on a laptop) `available()` is False and the daemon skips setup
 mode entirely, just running the scheduler.
 
-The daemon must run as root for these to work (AP + connection changes).
+These manage NetworkManager (AP + connection changes), which the unprivileged
+service account is allowed to do through membership in the `netdev` group — so
+no root is needed.
 """
 
 from __future__ import annotations

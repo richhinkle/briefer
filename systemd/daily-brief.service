@@ -1,12 +1,19 @@
 # Daily Brief daemon: scheduler + setup-mode (AP/web/button) state machine.
 #
-# Install (adjust paths/user to match your Pi):
+# Installed by `scripts/install.sh`, which creates the unprivileged
+# `daily-brief` user, its group memberships, and the sudoers drop-in this unit
+# relies on. To install/refresh by hand:
 #   sudo cp systemd/daily-brief.service /etc/systemd/system/
 #   sudo systemctl daemon-reload
 #   sudo systemctl enable --now daily-brief
 #   journalctl -u daily-brief -f      # follow logs
 #
-# Runs as root: nmcli (AP + WiFi changes) and GPIO need privileges.
+# Runs UNPRIVILEGED. What used to need root is granted narrowly instead:
+#   - bind port 80 for the console  -> AmbientCapabilities=CAP_NET_BIND_SERVICE
+#   - nmcli (AP + WiFi changes)      -> SupplementaryGroups=netdev (NM polkit)
+#   - GPIO button                    -> SupplementaryGroups=gpio
+#   - the printer (USB/serial)       -> SupplementaryGroups=dialout plugdev lp
+#   - shutdown + `systemctl restart` -> /etc/sudoers.d/daily-brief (NOPASSWD)
 
 [Unit]
 Description=Daily Brief printer daemon (scheduler + setup mode)
@@ -15,11 +22,17 @@ After=NetworkManager.service
 
 [Service]
 Type=simple
+User=daily-brief
+Group=daily-brief
+# netdev: NetworkManager via polkit; gpio: the button; dialout/plugdev/lp: printer.
+SupplementaryGroups=netdev gpio dialout plugdev lp
+# Let the unprivileged process bind the console's port 80 (and nothing more).
+AmbientCapabilities=CAP_NET_BIND_SERVICE
 # Release-based layout: `current` is a symlink to the active release, and
 # config.toml lives outside it so updates never disturb the device's settings.
 # (For a plain checkout, point both paths at the checkout instead.)
-WorkingDirectory=/home/briefer/current
-ExecStart=/home/briefer/current/.venv/bin/python -m daily_brief.daemon --config /home/briefer/config.toml
+WorkingDirectory=/opt/daily-brief/current
+ExecStart=/opt/daily-brief/current/.venv/bin/python -m daily_brief.daemon --config /opt/daily-brief/config.toml
 Restart=on-failure
 RestartSec=5
 

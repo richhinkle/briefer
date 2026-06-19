@@ -20,7 +20,7 @@ Because the unit runs `current/.venv/.../daily_brief.updater` (the *old* code)
 to perform the apply, even a hopelessly broken new build can't break the
 mechanism that recovers from it.
 
-Layout (anchored on the directory holding config.toml, e.g. /home/briefer):
+Layout (anchored on the directory holding config.toml, e.g. /opt/daily-brief):
 
     <base>/
       config.toml            # outside releases; never touched by updates
@@ -46,6 +46,8 @@ import urllib.request
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+
+from .privilege import sudo_wrap
 
 log = logging.getLogger("daily_brief.updater")
 
@@ -146,7 +148,9 @@ def trigger() -> tuple[bool, str]:
         return False, "systemctl unavailable (not a Pi/systemd install)."
     try:
         subprocess.run(
-            ["systemctl", "start", "--no-block", f"{SERVICE}-update.service"],
+            sudo_wrap(
+                ["systemctl", "start", "--no-block", f"{SERVICE}-update.service"]
+            ),
             check=True,
         )
         return True, "Update started."
@@ -159,7 +163,7 @@ def trigger() -> tuple[bool, str]:
 
 def _systemctl(*args: str) -> None:
     if shutil.which("systemctl"):
-        subprocess.run(["systemctl", *args], check=False)
+        subprocess.run(sudo_wrap(["systemctl", *args]), check=False)
     else:
         log.info("(no systemctl) would run: systemctl %s", " ".join(args))
 
@@ -257,7 +261,7 @@ def _build_venv(release: Path) -> None:
 def _smoke_test(release: Path, config: Path) -> bool:
     """Render a brief with the new code against the live config (read-only).
 
-    Exercises the friend's *actual* setup, so a release that breaks on their
+    Exercises the device's *actual* setup, so a release that breaks on its
     specific briefs/sources is caught before it ever goes live.
     """
     py = release / ".venv" / "bin" / "python"

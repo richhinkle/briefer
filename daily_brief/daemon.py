@@ -322,8 +322,10 @@ class Controller:
         self._print_notice(shutdown_notice_brief(self.scheduler.config))
         import subprocess
 
+        from .privilege import sudo_wrap
+
         try:
-            subprocess.run(["shutdown", "-h", "now"], check=False)
+            subprocess.run(sudo_wrap(["shutdown", "-h", "now"]), check=False)
         except OSError as exc:
             log.error("shutdown failed: %s", exc)
 

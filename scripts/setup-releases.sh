@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
-# One-time migration: convert a plain checkout into the release-based layout the
-# console's Software updater expects. Run this ON THE PI, once.
+# Build the release-based layout the console's Software updater expects. This is
+# the venv-building step of `scripts/install.sh` (which runs it as the
+# `daily-brief` user); you can also run it directly to rebuild after a code
+# change. The install base is the PARENT of the checkout.
 #
-#   from a checkout at /home/briefer/briefer it produces:
-#     /home/briefer/config.toml          (moved out of the checkout)
-#     /home/briefer/releases/<version>/  (a fresh copy + venv)
-#     /home/briefer/current -> releases/<version>
-#     /home/briefer/staging/
+#   from a checkout at /opt/daily-brief/briefer it produces:
+#     /opt/daily-brief/config.toml          (moved out of the checkout)
+#     /opt/daily-brief/releases/<version>/  (a fresh copy + venv)
+#     /opt/daily-brief/current -> releases/<version>
+#     /opt/daily-brief/staging/
 #
-# Usage (on the Pi):  sudo -u briefer ./scripts/setup-releases.sh
+# Usage (on the Pi):  sudo -u daily-brief ./scripts/setup-releases.sh
 # Re-run is safe: it builds a new release and re-points `current`.
 
 set -euo pipefail
 
 SRC="$(cd "$(dirname "$0")/.." && pwd)"     # the checkout this script lives in
-BASE="$(dirname "$SRC")"                      # e.g. /home/briefer
+BASE="$(dirname "$SRC")"                      # e.g. /opt/daily-brief
 RELEASES="$BASE/releases"
 STAGING="$BASE/staging"
 

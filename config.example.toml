@@ -69,7 +69,7 @@ ap_password = "briefme123"
 # Hostname the control console is reachable at (printed on the setup slip and the
 # same URL you use day to day). Leave blank to derive "<pi-hostname>.local" from
 # the Pi automatically; mDNS (avahi) serves it during setup and on your LAN.
-# console_host = "briefer.local"
+# console_host = "daily-brief.local"
 button_gpio = 24
 
 [web]
@@ -78,6 +78,10 @@ button_gpio = 24
 # automatically — don't hand-edit them.
 host = "0.0.0.0"
 port = 80
+# Allow installing an uploaded release tarball from the console's Software page.
+# Off by default — running an arbitrary uploaded build is risky. Turn it on only
+# when you intend to push a remote update, then turn it back off.
+# allow_remote_update = false
 
 # ---------------------------------------------------------------------------
 # Briefs. Each is a named, ordered set of sections (file order = print order).

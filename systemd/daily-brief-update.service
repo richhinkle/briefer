@@ -15,6 +15,10 @@ Description=Daily Brief release installer (atomic, with rollback)
 
 [Service]
 Type=oneshot
-WorkingDirectory=/home/briefer/current
-ExecStart=/home/briefer/current/.venv/bin/python -m daily_brief.updater \
-  --config /home/briefer/config.toml --verbose
+# Same unprivileged account as the daemon; it restarts the service through the
+# /etc/sudoers.d/daily-brief grant (it does not need root itself).
+User=daily-brief
+Group=daily-brief
+WorkingDirectory=/opt/daily-brief/current
+ExecStart=/opt/daily-brief/current/.venv/bin/python -m daily_brief.updater \
+  --config /opt/daily-brief/config.toml --verbose

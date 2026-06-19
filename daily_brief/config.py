@@ -156,7 +156,7 @@ class NetworkConfig:
     ap_ssid: str = "daily-brief-setup"
     ap_password: str = "briefme123"
     button_gpio: int | None = 24
-    # Hostname the control console is reachable at, e.g. "briefer.local". Served
+    # Hostname the control console is reachable at, e.g. "daily-brief.local". Served
     # by the Pi's mDNS (avahi, preinstalled on Raspberry Pi OS), so the same URL
     # works during setup *and* afterward on the home network. Empty = derive it
     # from the Pi's own hostname, so the printed name can't drift from reality.
@@ -179,6 +179,10 @@ class WebConfig:
     port: int = 80
     password_hash: str = ""  # werkzeug hash; empty = first-run, prompt to set one
     secret_key: str = ""     # Flask session signing; auto-generated on first run
+    # Allow installing an uploaded release tarball from the console's Software
+    # page. Off by default: accepting and running an arbitrary build is risky,
+    # so it's a deliberate opt-in (set `allow_remote_update = true`).
+    allow_remote_update: bool = False
 
 
 @dataclass
@@ -357,6 +361,7 @@ def _from_dict(data: dict) -> Config:
         port=int(web_raw.get("port", 80)),
         password_hash=web_raw.get("password_hash", ""),
         secret_key=web_raw.get("secret_key", ""),
+        allow_remote_update=bool(web_raw.get("allow_remote_update", False)),
     )
 
     # Briefs: new `[[briefs]]` schema, else migrate flat `[[sections]]`.
@@ -456,6 +461,7 @@ def to_dict(config: Config) -> dict:
             "port": config.web.port,
             **({"password_hash": config.web.password_hash} if config.web.password_hash else {}),
             **({"secret_key": config.web.secret_key} if config.web.secret_key else {}),
+            **({"allow_remote_update": True} if config.web.allow_remote_update else {}),
         },
         "briefs": [
             {

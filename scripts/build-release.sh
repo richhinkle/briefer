@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Build a release tarball to hand to a friend for uploading via the console
-# (Software page). The archive contains the app source only — no .venv, .git,
+# Build a release tarball for uploading via the console's Software page.
+# The archive contains the app source only — no .venv, .git,
 # config.toml, or caches — and is rebuilt fresh on the device.
 #
 # Usage:

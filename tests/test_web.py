@@ -103,3 +103,49 @@ def test_settings_round_trip(client, cfgpath):
     assert cfg.claude.model == "claude-haiku-4-5"
     assert cfg.network.ap_ssid == "brief-ap"
     assert cfg.network.button_gpio == 24
+
+
+def test_software_remote_update_disabled_by_default(client, monkeypatch):
+    """With the default config, the Software page won't accept an upload."""
+    import io
+
+    from daily_brief import updater
+
+    monkeypatch.setattr(updater, "is_managed", lambda p: True)  # release-based
+    monkeypatch.setattr(updater, "trigger", lambda: (_ for _ in ()).throw(
+        AssertionError("trigger must not run while remote update is disabled")))
+
+    body = client.get("/software").get_data(as_text=True)
+    assert 'name="tarball"' not in body          # no upload form
+    assert "disabled" in body.lower()
+
+    resp = client.post("/software", data={"tarball": (io.BytesIO(b"x"), "r.tgz")},
+                       content_type="multipart/form-data")
+    assert resp.status_code == 302               # refused, redirected back
+
+
+def test_software_remote_update_when_enabled(tmp_path, monkeypatch):
+    """With allow_remote_update = true, a valid upload reaches the installer."""
+    import io
+
+    from werkzeug.security import generate_password_hash
+
+    from daily_brief import updater
+
+    p = tmp_path / "config.toml"
+    p.write_text(
+        f'[web]\nsecret_key="s"\npassword_hash="{generate_password_hash(PASSWORD)}"\n'
+        'allow_remote_update=true\n'
+        '[location]\nlat=40.4\nlon=-3.7\ntz="Europe/Madrid"\n'
+        '[[briefs]]\nname="t"\n  [[briefs.sections]]\n  type="joke"\n'
+    )
+    calls = []
+    monkeypatch.setattr(updater, "is_managed", lambda p: True)
+    monkeypatch.setattr(updater, "stage_upload", lambda p, s: calls.append("stage"))
+    monkeypatch.setattr(updater, "trigger", lambda: (calls.append("trigger"), (True, "ok"))[1])
+
+    c = _app(p).test_client()
+    c.post("/login", data={"password": PASSWORD})
+    c.post("/software", data={"tarball": (io.BytesIO(b"x"), "r.tgz")},
+           content_type="multipart/form-data")
+    assert calls == ["stage", "trigger"]

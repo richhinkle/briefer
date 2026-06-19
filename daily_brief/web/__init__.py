@@ -205,10 +205,15 @@ def create_app(config_path: str | Path | None = None) -> Flask:
     def software():
         from .. import updater
 
+        cfg = load_current()
+        allow = cfg.web.allow_remote_update
         p = updater.paths_for(app.config["CONFIG_PATH"])
         if request.method == "POST":
             f = request.files.get("tarball")
-            if not f or not f.filename:
+            if not allow:
+                flash("Remote updates are disabled. Enable them by setting "
+                      "[web] allow_remote_update = true in config.toml.", "error")
+            elif not f or not f.filename:
                 flash("Choose a .tgz file to upload.", "error")
             elif not f.filename.endswith((".tgz", ".tar.gz")):
                 flash("Expected a .tgz / .tar.gz release archive.", "error")
@@ -229,6 +234,7 @@ def create_app(config_path: str | Path | None = None) -> Flask:
             "software.html",
             version=updater.current_version(),
             managed=updater.is_managed(p),
+            allow=allow,
             status=updater.read_status(p),
         )
 

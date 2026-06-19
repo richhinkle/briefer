@@ -134,7 +134,8 @@ def test_shutdown_prints_goodbye_before_powering_off(tmp_path):
 
     assert [step for step, _ in order] == ["print", "run"]      # goodbye first
     assert isinstance(order[0][1], d.Brief)
-    assert order[1][1] == ["shutdown", "-h", "now"]
+    # The daemon runs unprivileged, so the call is wrapped (sudo -n …) off-root.
+    assert order[1][1][-3:] == ["shutdown", "-h", "now"]
 
 
 def test_shutdown_notice_brief_says_goodbye():

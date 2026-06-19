@@ -1,0 +1,18 @@
+# Privilege grant for the unprivileged `daily-brief` service account.
+# Installed by scripts/install.sh to /etc/sudoers.d/daily-brief (mode 0440).
+#
+# Grants NOPASSWD on EXACTLY the commands the daemon shells out to via
+# `sudo -n` (see daily_brief/privilege.py) — and nothing else:
+#   - shutdown on a 5s button hold            (daemon._shutdown)
+#   - start the oneshot release installer     (updater.trigger)
+#   - restart the daemon after an update       (updater._systemctl)
+# The exact argument lists are matched, so this is not a general systemctl/
+# shutdown grant. Paths are the Raspberry Pi OS (Bookworm) defaults.
+#
+# Validate after editing:  sudo visudo -cf /etc/sudoers.d/daily-brief
+
+Cmnd_Alias DAILY_BRIEF = /usr/sbin/shutdown -h now, \
+                         /usr/bin/systemctl start --no-block daily-brief-update.service, \
+                         /usr/bin/systemctl restart daily-brief
+
+daily-brief ALL=(root) NOPASSWD: DAILY_BRIEF
