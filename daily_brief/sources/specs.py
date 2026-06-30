@@ -181,4 +181,12 @@ SECTION_SPECS: dict[str, SectionSpec] = {
                   "(news, today's events). Slower and costs more per print."),
         ],
     ),
+    "sudoku": SectionSpec(
+        "sudoku", "Sudoku puzzle",
+        "A daily sudoku puzzle grid (free Dosuku API, no key needed).",
+        fields=[
+            Field("show_solution", "Print solution", "bool", True,
+                  "Include the solution below the puzzle grid."),
+        ],
+    ),
 }

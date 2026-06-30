@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  daily-brief:
+    build: .
+    container_name: daily-brief
+    restart: unless-stopped
+
+    # Pass through the USB thermal printer
+    devices:
+      - /dev/usb/lp0:/dev/usb/lp0
+
+    # Web console accessible from your LAN
+    ports:
+      - "8080:80"
+
+    volumes:
+      # Persistent config — edit via web console or manually
+      - ./config.toml:/app/config.toml
+      # Cache (weather, jokes, etc.) survives container restarts
+      - brief-cache:/root/.cache/daily_brief
+
+volumes:
+  brief-cache:
