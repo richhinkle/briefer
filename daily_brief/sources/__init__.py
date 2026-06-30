@@ -107,6 +107,7 @@ def _register() -> dict:
         oncall,
         onthisday,
         space,
+        sudoku,
         trivia,
         weather,
         word,
@@ -130,6 +131,7 @@ def _register() -> dict:
         "planets": space.build_planets,
         "ascii": asciiart.build,
         "ai": ai.build,
+        "sudoku": sudoku.build,
     }
 
 

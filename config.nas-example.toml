@@ -1,0 +1,93 @@
+# Daily Brief — NAS deployment config
+#
+# Copy this to `config.toml` before running (or let the web console write it).
+# This example is tailored for a Synology NAS with a USB thermal printer.
+
+[printer]
+backend = "usb"            # "dummy" (testing) | "usb" | "serial"
+profile = "default"
+band_height = 64
+band_pause  = 0.05
+
+[printer.usb]
+# Find your IDs: python scripts/printer_test.py --list-usb
+# Common Rongta: 0x0483:0x5743 or check lsusb output on your NAS
+vendor_id  = 0x0483
+product_id = 0x5743
+
+[printer.serial]
+port     = "/dev/ttyUSB0"
+baudrate = 19200
+
+[location]
+# Your location for weather, daylight, planets
+lat = 40.7128
+lon = -74.0060
+tz  = "America/New_York"
+
+[render]
+dot_width    = 576         # 80mm printer @ 203 dpi (use 384 for 58mm)
+body_size    = 22
+heading_size = 26
+margin       = 8
+time_format  = "12h"
+temp_unit    = "F"
+min_length_mm = 0
+
+[claude]
+enabled = false
+# api_key = "sk-ant-..."
+model = "claude-sonnet-4-6"
+
+[email]
+enabled = false
+
+# Network section is mostly ignored in Docker/NAS mode (no AP, no button)
+# but the daemon reads it without error.
+[network]
+ap_ssid     = "daily-brief-setup"
+ap_password = "briefme123"
+
+[web]
+host = "0.0.0.0"
+port = 80
+
+# ---------------------------------------------------------------------------
+# Briefs
+# ---------------------------------------------------------------------------
+
+[[briefs]]
+name = "morning"
+
+  [[briefs.sections]]
+  type = "greeting"
+  use_claude = false
+  style = "morning"
+  date_format = "%A, %d %B %Y"
+
+  [[briefs.sections]]
+  type = "weather"
+  api_key = "YOUR_OPENWEATHERMAP_KEY"
+
+  [[briefs.sections]]
+  type = "daylight"
+  title = "DAYLIGHT"
+
+  [[briefs.sections]]
+  type = "sudoku"
+  title = "DAILY SUDOKU"
+  show_solution = true
+
+  [[briefs.sections]]
+  type = "joke"
+  title = "DAD JOKE"
+
+# ---------------------------------------------------------------------------
+# Schedules
+# ---------------------------------------------------------------------------
+
+[[schedules]]
+name = "Morning brief"
+brief = "morning"
+time = "07:00"
+enabled = true
