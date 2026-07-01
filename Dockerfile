@@ -28,7 +28,8 @@ COPY config.example.toml /app/config.example.toml
 # The web console runs on port 80 by default
 EXPOSE 80
 
-# Run the daemon with --no-setup to skip AP/WiFi/button state machine.
-# The scheduler + web console still run.
-ENTRYPOINT ["python", "-m", "daily_brief.daemon", "--no-setup"]
+# Run the full daemon (Controller mode). On a NAS without GPIO/nmcli it
+# gracefully skips AP/button handling but still starts the web console +
+# scheduler. The web console provides the config UI at http://<nas-ip>:8080.
+ENTRYPOINT ["python", "-m", "daily_brief.daemon"]
 CMD ["--config", "/app/config.toml"]
