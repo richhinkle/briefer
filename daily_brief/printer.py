@@ -55,9 +55,17 @@ def make_printer(cfg: PrinterConfig):
             profile=cfg.profile,
         )
 
+    if backend == "file":
+        from escpos.printer import File
+
+        return File(
+            devfile=cfg.serial.port,
+            profile=cfg.profile,
+        )
+
     raise ValueError(
         f"Unknown printer backend {cfg.backend!r}. "
-        "Expected one of: dummy, usb, serial."
+        "Expected one of: dummy, usb, serial, file."
     )
 
 
