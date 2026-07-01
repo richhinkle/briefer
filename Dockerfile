@@ -32,4 +32,4 @@ EXPOSE 80
 # gracefully skips AP/button handling but still starts the web console +
 # scheduler. The web console provides the config UI at http://<nas-ip>:8080.
 ENTRYPOINT ["python", "-m", "daily_brief.daemon"]
-CMD ["--config", "/app/config.toml"]
+CMD ["--config", "/app/data/config.toml"]

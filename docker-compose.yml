@@ -15,8 +15,9 @@ services:
       - "8080:80"
 
     volumes:
-      # Persistent config — edit via web console or manually
-      - ./config.toml:/app/config.toml
+      # Mount the data directory (not a single file) so the web console
+      # can do atomic writes (tmp + rename) to config.toml
+      - ./data:/app/data
       # Cache (weather, jokes, etc.) survives container restarts
       - brief-cache:/root/.cache/daily_brief
 
