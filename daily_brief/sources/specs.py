@@ -189,4 +189,12 @@ SECTION_SPECS: dict[str, SectionSpec] = {
                   "Include the solution below the puzzle grid."),
         ],
     ),
+    "xkcd": SectionSpec(
+        "xkcd", "xkcd comic",
+        "The latest xkcd comic (updates Mon/Wed/Fri, no key needed).",
+        fields=[
+            Field("show_alt", "Show alt text", "bool", True,
+                  "Print the hover/alt text below the comic."),
+        ],
+    ),
 }
