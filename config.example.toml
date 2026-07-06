@@ -183,6 +183,12 @@ name = "morning"
   # title = "DAILY SUDOKU"
   # show_solution = true
 
+  # The latest xkcd comic (updates Mon/Wed/Fri, no key needed).
+  # [[briefs.sections]]
+  # type = "xkcd"
+  # title = "XKCD"
+  # show_alt = true
+
   # Days remaining until a target date. Disappears once the date has passed; on
   # the day itself it prints `arrived_message`. A progress bar (start -> target)
   # is optional and needs `start_date`.

@@ -111,6 +111,7 @@ def _register() -> dict:
         trivia,
         weather,
         word,
+        xkcd,
     )
 
     return {
@@ -132,6 +133,7 @@ def _register() -> dict:
         "ascii": asciiart.build,
         "ai": ai.build,
         "sudoku": sudoku.build,
+        "xkcd": xkcd.build,
     }
 
 
