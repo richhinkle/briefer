@@ -13,18 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
+          python3 -m pip install --break-system-packages -r requirements.txt
+          python3 -m pip install --break-system-packages -r requirements-dev.txt
 
       - name: Run tests
-        run: python -m pytest tests/ -v
+        run: python3 -m pytest tests/ -v
 
   build-and-deploy:
     needs: test
