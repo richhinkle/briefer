@@ -47,8 +47,8 @@ jobs:
           echo ">>> Rebuilding and restarting container..."
           ssh -p ${NAS_PORT} ${NAS_USER}@${NAS_HOST} "
             cd ${DEPLOY_PATH} &&
-            sudo docker compose build --no-cache &&
-            sudo docker compose up -d --remove-orphans
+            sudo /usr/local/bin/docker compose build --no-cache &&
+            sudo /usr/local/bin/docker compose up -d --remove-orphans
           "
 
           echo ">>> Deploy complete. Briefer running at http://${NAS_HOST}:8080"
