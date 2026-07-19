@@ -2,14 +2,12 @@
 # Strips Pi-specific dependencies (GPIO, AP/WiFi) and runs the daemon
 # with the web console + scheduler in a single container.
 
-FROM python:3.11-slim
+FROM python:3.11
 
-# System deps for python-escpos USB backend and Pillow image rendering
+# python:3.11 (full image) already includes imaging libraries (libjpeg, freetype,
+# openjp2, etc.) so we only need libusb for the thermal printer backend.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libusb-1.0-0 \
-    libjpeg62-turbo \
-    libfreetype6 \
-    libopenjp2-7 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
