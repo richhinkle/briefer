@@ -54,6 +54,7 @@ jobs:
           ssh -p ${NAS_PORT} ${NAS_USER}@${NAS_HOST} "
             cd ${DEPLOY_PATH} &&
             mkdir -p data &&
+            sudo /usr/local/bin/docker compose down &&
             sudo /usr/local/bin/docker compose up -d --remove-orphans
           "
 
