@@ -54,8 +54,8 @@ jobs:
           ssh -T -p ${NAS_PORT} ${NAS_USER}@${NAS_HOST} "\
             cd ${DEPLOY_PATH} && \
             mkdir -p data && \
-            sudo /usr/local/bin/docker compose down 2>/dev/null; \
-            sudo /usr/local/bin/docker compose up -d --remove-orphans; \
-            exit"
+            sudo /usr/local/bin/docker compose down >/dev/null 2>&1; \
+            sudo /usr/local/bin/docker compose up -d --remove-orphans >/dev/null 2>&1; \
+            echo DEPLOY_COMPLETE"
 
           echo ">>> Deploy complete. Briefer running at http://${NAS_HOST}:8080"
