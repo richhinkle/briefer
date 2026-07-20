@@ -35,19 +35,25 @@ jobs:
           NAS_PORT: ${{ secrets.NAS_PORT }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
-          echo ">>> Syncing code to NAS..."
-          rsync -avz --delete \
-            --exclude '.git' \
-            --exclude '__pycache__' \
-            --exclude '*.pyc' \
-            --exclude 'data/' \
+          echo ">>> Building image on runner (fast CPU)..."
+          docker build -t briefer-daily-brief:latest .
+
+          echo ">>> Saving and transferring image to NAS..."
+          docker save briefer-daily-brief:latest | ssh -p ${NAS_PORT} ${NAS_USER}@${NAS_HOST} "sudo /usr/local/bin/docker load"
+
+          echo ">>> Syncing compose file and config..."
+          rsync -avz \
+            --include='docker-compose.yml' \
+            --include='config.example.toml' \
+            --include='data/***' \
+            --exclude='*' \
             -e "ssh -p ${NAS_PORT}" \
             ./ ${NAS_USER}@${NAS_HOST}:${DEPLOY_PATH}/
 
-          echo ">>> Rebuilding and restarting container..."
+          echo ">>> Restarting container on NAS..."
           ssh -p ${NAS_PORT} ${NAS_USER}@${NAS_HOST} "
             cd ${DEPLOY_PATH} &&
-            sudo /usr/local/bin/docker compose build &&
+            mkdir -p data &&
             sudo /usr/local/bin/docker compose up -d --remove-orphans
           "
 
