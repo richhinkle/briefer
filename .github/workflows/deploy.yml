@@ -56,8 +56,11 @@ jobs:
           ssh -T -p ${NAS_PORT} ${NAS_USER}@${NAS_HOST} "\
             cd ${DEPLOY_PATH} && \
             mkdir -p data && \
-            sudo /usr/local/bin/docker compose down >/dev/null 2>&1; \
-            sudo /usr/local/bin/docker compose up -d --remove-orphans >/dev/null 2>&1; \
-            echo DEPLOY_COMPLETE"
+            nohup sh -c 'sudo /usr/local/bin/docker compose down; sudo /usr/local/bin/docker compose up -d --remove-orphans' > /tmp/briefer-deploy.log 2>&1 &"
+          
+          echo ">>> Waiting for container to start..."
+          sleep 10
+          ssh -T -p ${NAS_PORT} ${NAS_USER}@${NAS_HOST} \
+            "sudo /usr/local/bin/docker ps --filter name=daily-brief --format '{{.Status}}'"
 
           echo ">>> Deploy complete. Briefer running at http://${NAS_HOST}:8080"
