@@ -4,7 +4,7 @@ services:
   daily-brief:
     build: .
     container_name: daily-brief
-    restart: unless-stopped
+    restart: always
 
     # Pass through the USB thermal printer
     devices:

@@ -8,7 +8,7 @@
     <div class="fields">
       <label>Backend
         <select name="printer_backend">
-          {% for b in ['dummy', 'usb', 'serial'] %}<option value="{{ b }}" {{ 'selected' if b == cfg.printer.backend }}>{{ b }}</option>{% endfor %}
+          {% for b in ['dummy', 'usb', 'serial', 'file'] %}<option value="{{ b }}" {{ 'selected' if b == cfg.printer.backend }}>{{ b }}</option>{% endfor %}
         </select>
       </label>
       <label>USB vendor id<input name="usb_vendor_id" value="0x{{ '%04x' % cfg.printer.usb.vendor_id }}"></label>
