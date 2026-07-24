@@ -189,6 +189,24 @@ name = "morning"
   # progress_bar = true
   # start_date = "2026-12-01"
 
+  # QR code: encode text, a URL, or WiFi credentials as a scannable code.
+  # [[briefs.sections]]
+  # type = "qrcode"
+  # title = "GUEST WIFI"
+  # mode = "wifi"            # "text" for a URL/text, "wifi" for network credentials
+  # ssid = "GuestNetwork"
+  # password = "welcome123"
+  # security = "WPA"         # WPA | WEP | nopass
+  # label = "Scan to connect"
+  #
+  # For a plain URL:
+  # [[briefs.sections]]
+  # type = "qrcode"
+  # title = "QR CODE"
+  # mode = "text"
+  # data = "https://example.com"
+  # label = "Visit us"
+
 # A tiny second brief, for a midday pick-me-up.
 [[briefs]]
 name = "midday-joke"

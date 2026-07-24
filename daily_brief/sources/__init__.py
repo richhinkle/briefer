@@ -106,6 +106,7 @@ def _register() -> dict:
         lirr,
         oncall,
         onthisday,
+        qrcode_source,
         space,
         trivia,
         weather,
@@ -130,6 +131,7 @@ def _register() -> dict:
         "planets": space.build_planets,
         "ascii": asciiart.build,
         "ai": ai.build,
+        "qrcode": qrcode_source.build,
     }
 
 

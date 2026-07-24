@@ -5,6 +5,7 @@ pyserial>=3.0     # serial/USB-serial printer backend
 
 # Content sources (all pure-Python / ARM-friendly).
 requests>=2.28               # HTTP for weather, jokes, on-this-day, number facts
+qrcode>=7.4                  # QR code generation (pure Python, uses Pillow for images)
 icalendar>=5.0               # parse .ics calendar feeds
 recurring-ical-events>=2.1   # expand recurring events (yearly birthdays, etc.)
 python-dateutil>=2.8         # timezone-aware date math
