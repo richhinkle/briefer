@@ -106,6 +106,7 @@ def _register() -> dict:
         lirr,
         oncall,
         onthisday,
+        qrcode_source,
         space,
         sudoku,
         trivia,
@@ -134,6 +135,7 @@ def _register() -> dict:
         "ai": ai.build,
         "sudoku": sudoku.build,
         "xkcd": xkcd.build,
+        "qrcode": qrcode_source.build,
     }
 
 
