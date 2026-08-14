@@ -56,4 +56,19 @@ jobs:
           ssh -T -p ${NAS_PORT} ${NAS_USER}@${NAS_HOST} \
             "cd ${DEPLOY_PATH} && mkdir -p data && sudo /usr/local/bin/docker compose down < /dev/null > /dev/null 2>&1; sudo /usr/local/bin/docker compose up -d --remove-orphans < /dev/null > /dev/null 2>&1"
 
-          echo ">>> Deploy complete. Briefer running at http://${NAS_HOST}:8080"
+          echo ">>> Deploy complete."
+
+      - name: Verify service is healthy
+        env:
+          NAS_HOST: ${{ secrets.NAS_HOST }}
+        run: |
+          echo ">>> Waiting for Briefer to come up on port 8080..."
+          for i in $(seq 1 12); do
+            if curl -sf --max-time 5 "http://${NAS_HOST}:8080" > /dev/null; then
+              echo ">>> Briefer is healthy!"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo ">>> ERROR: Briefer did not respond within 60 seconds"
+          exit 1
