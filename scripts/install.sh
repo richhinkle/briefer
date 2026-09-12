@@ -25,7 +25,8 @@
 # Prerequisites (install first):
 #   sudo apt update
 #   sudo apt install -y python3-venv python3-dev build-essential rsync \
-#                       libusb-1.0-0 python3-gpiozero python3-lgpio
+#                       libusb-1.0-0 libopenjp2-7 libfreetype6 \
+#                       python3-gpiozero python3-lgpio
 #
 # Raw-USB printer? Pass its USB id so a udev rule is installed for it:
 #   sudo ESCPOS_USB_ID=1d81:5721 ./scripts/install.sh

@@ -25,7 +25,8 @@ it to a different name).
 ```bash
 sudo apt update
 sudo apt install -y git python3-venv python3-dev build-essential \
-                    libusb-1.0-0 python3-gpiozero python3-lgpio
+                    libusb-1.0-0 libopenjp2-7 libfreetype6 \
+                    python3-gpiozero python3-lgpio
 git clone <your-repo> ~/briefer && cd ~/briefer
 ```
 
