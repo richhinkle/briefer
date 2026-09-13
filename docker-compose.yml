@@ -6,6 +6,12 @@ services:
     container_name: daily-brief
     restart: always
 
+    # The scheduler fires briefs by the container's local clock
+    # (datetime.now()), so the timezone must match your location or the
+    # morning brief prints at the wrong hour (UTC by default).
+    environment:
+      - TZ=America/New_York
+
     # Pass through the USB thermal printer
     devices:
       - /dev/usb/lp0:/dev/usb/lp0
