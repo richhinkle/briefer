@@ -24,3 +24,4 @@ anthropic>=0.40
 # Pi-only, install via apt (GPIO setup button); optional, degrades if absent:
 #   sudo apt install python3-gpiozero python3-lgpio
 # AP / WiFi management uses the system `nmcli` (NetworkManager, Bookworm) — no pip dep.
+beautifulsoup4>=4.12         # HTML scraping for the Final Jeopardy section

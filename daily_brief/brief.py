@@ -93,9 +93,20 @@ class Title:
     subtitle: str = ""
 
 
+@dataclass
+class UpsideDown:
+    """Body text rendered rotated 180 degrees.
+
+    Read what is printed above it, then flip the paper to reveal this
+    (classic trivia-card UX; used by the Final Jeopardy section).
+    """
+
+    text: str
+
+
 Item = (
     Text | Checkbox | Bullet | Banner | KeyVal | Weather | Picture | ProgressBar
-    | Mono | Title
+    | Mono | Title | UpsideDown
 )
 
 

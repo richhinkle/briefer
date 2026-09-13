@@ -217,4 +217,13 @@ SECTION_SPECS: dict[str, SectionSpec] = {
             Field("hidden", "Hidden network", "bool", False),
         ],
     ),
+    "jeopardy": SectionSpec(
+        "jeopardy", "Final Jeopardy",
+        "Tonight's Final Jeopardy category, clue, and answer (printed upside down).",
+        fields=[
+            Field("cache_hours", "Cache (hours)", "int", 6,
+                  "How long to reuse a fetched clue before scraping again. "
+                  "The answer posts after the show airs (~7pm ET)."),
+        ],
+    ),
 }

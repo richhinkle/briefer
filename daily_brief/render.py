@@ -18,7 +18,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from .brief import (
     Banner, Brief, Bullet, Checkbox, KeyVal, Mono, Picture, ProgressBar, Section,
-    Text, Title, Weather,
+    Text, Title, UpsideDown, Weather,
 )
 from .config import ASSETS_DIR, RenderConfig
 
@@ -251,6 +251,25 @@ class Canvas:
             self.spacer(2)
             self._center(subtitle, self.f_body)
 
+    def upside_down(self, text: str) -> None:
+        """Draw body text rotated 180 degrees, under a thin separator rule.
+
+        The text is laid out normally on a temporary canvas the width of the
+        content column, rotated, and pasted back so it prints upside down.
+        """
+        self.rule(weight=1, pad=5)  # thin divider between clue and flipped answer
+        lh = self._line_height(self.f_body)
+        lines = self._wrap(text, self.f_body, self.content_w)
+        h = lh * len(lines)
+        tmp = Image.new("L", (self.content_w, h), 255)
+        tdraw = ImageDraw.Draw(tmp)
+        ty = 0
+        for line in lines:
+            tdraw.text((0, ty), line, font=self.f_body, fill=0)
+            ty += lh
+        self.img.paste(tmp.rotate(180), (self.x0, self.y))
+        self.y += h
+
     # --- composition -------------------------------------------------------
 
     def _draw_item(self, item) -> None:
@@ -274,6 +293,8 @@ class Canvas:
             self.mono(item.text)
         elif isinstance(item, Title):
             self.title(item.text, item.subtitle)
+        elif isinstance(item, UpsideDown):
+            self.upside_down(item.text)
 
     def section(self, section: Section) -> None:
         # A "bare" section (e.g. the greeting) renders its items with no
